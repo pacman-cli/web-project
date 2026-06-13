@@ -153,6 +153,7 @@ try {
 
 <script>
     let activeInstrument = 'all';
+    let pendingEnrollmentCourseId = null;
 
     function filterCourses() {
         const query = document.getElementById('course-search').value.toLowerCase();
@@ -193,30 +194,98 @@ try {
     }
 
     function requestEnrollment(courseId) {
-        if (!confirm('Would you like to request enrollment in this course? Your request will be sent to the administrator.')) return;
+        pendingEnrollmentCourseId = courseId;
+        document.getElementById('enroll-course-id').value = courseId;
+        document.getElementById('enroll-resume').value = '';
+        document.getElementById('enroll-file-label').textContent = 'Choose PDF (required)';
+        document.getElementById('enroll-modal').classList.remove('hidden');
+    }
+
+    function closeEnrollModal() {
+        document.getElementById('enroll-modal').classList.add('hidden');
+        pendingEnrollmentCourseId = null;
+    }
+
+    function submitEnrollment() {
+        const fileInput = document.getElementById('enroll-resume');
+        const courseId = document.getElementById('enroll-course-id').value;
+
+        if (!fileInput.files.length) {
+            alert('Please upload your resume (PDF) to proceed.');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        if (file.type !== 'application/pdf') {
+            alert('Resume must be a PDF file.');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Resume file size must be under 5MB.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('course_id', courseId);
+        formData.append('resume', file);
+
+        const submitBtn = document.getElementById('enroll-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting…';
 
         fetch(BASE_URL + '/student/enroll.php', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': '<?= csrf_token() ?>'
-            },
-            body: JSON.stringify({ course_id: courseId })
+            headers: { 'X-CSRF-Token': '<?= csrf_token() ?>' },
+            body: formData
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
                 alert(data.message || 'Request sent successfully!');
+                closeEnrollModal();
                 window.location.reload();
             } else {
                 alert(data.error || 'Failed to request enrollment.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Request';
             }
         })
         .catch(err => {
             console.error(err);
             alert('Failed to connect to server.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Request';
         });
     }
 </script>
+
+<!-- Enrollment Modal -->
+<div id="enroll-modal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
+    <button class="absolute inset-0 bg-on-background/40 backdrop-blur-sm w-full h-full" onclick="closeEnrollModal()" aria-label="Close modal"></button>
+    <div class="relative bg-surface-container-lowest w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl shadow-xl flex flex-col">
+        <div class="px-xl py-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+            <h2 class="text-h2 font-h2 text-on-surface">Enrollment Request</h2>
+            <button onclick="closeEnrollModal()" class="p-xs hover:bg-surface-container-high rounded-full transition-colors text-secondary" aria-label="Close modal">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+        </div>
+        <div class="p-xl space-y-md">
+            <input type="hidden" id="enroll-course-id" value=""/>
+            <p class="text-body-md text-secondary">Upload your resume (PDF) to request enrollment. The administrator will review your application.</p>
+            <div>
+                <label class="text-label-md font-label-md text-on-surface-variant block mb-xs">Resume (PDF, max 5MB)</label>
+                <label for="enroll-resume" class="flex items-center gap-sm px-md py-sm border-2 border-dashed border-outline-variant rounded-lg cursor-pointer hover:border-primary hover:bg-primary-fixed/20 transition-all">
+                    <span class="material-symbols-outlined text-secondary" aria-hidden="true">upload_file</span>
+                    <span id="enroll-file-label" class="text-body-sm text-secondary">Choose PDF (required)</span>
+                    <input type="file" id="enroll-resume" accept=".pdf,application/pdf" class="hidden"/>
+                </label>
+            </div>
+        </div>
+        <div class="px-xl py-md border-t border-outline-variant flex justify-end gap-sm bg-surface-container-low">
+            <button onclick="closeEnrollModal()" class="px-md py-sm border border-outline text-secondary rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-all">Cancel</button>
+            <button onclick="submitEnrollment()" id="enroll-submit-btn" class="px-md py-sm bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all shadow-sm">Submit Request</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>

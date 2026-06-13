@@ -12,7 +12,7 @@ $pdo = require_once __DIR__ . '/../config/db.php';
 // Fetch all enrollment requests
 try {
     $stmt = $pdo->query("
-        SELECT e.id, e.status, e.rejection_reason, e.enrolled_at, e.reviewed_at,
+        SELECT e.id, e.status, e.rejection_reason, e.resume_path, e.enrolled_at, e.reviewed_at,
                u_student.id as student_id, u_student.name as student_name, u_student.email as student_email,
                c.id as course_id, c.title as course_title, inst.name as instrument_name,
                u_reviewer.name as reviewer_name
@@ -103,13 +103,14 @@ try {
                             <th class="py-4 px-md font-label-sm text-label-sm text-secondary uppercase tracking-wider">Instrument</th>
                             <th class="py-4 px-md font-label-sm text-label-sm text-secondary uppercase tracking-wider">Request Date</th>
                             <th class="py-4 px-md font-label-sm text-label-sm text-secondary uppercase tracking-wider">Status</th>
+                            <th class="py-4 px-md font-label-sm text-label-sm text-secondary uppercase tracking-wider">Resume</th>
                             <th class="py-4 px-md font-label-sm text-label-sm text-secondary uppercase tracking-wider text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-outline-variant" id="requests-list">
                         <?php if (empty($enrollments)): ?>
                             <tr>
-                                <td colspan="7" class="px-md py-md text-center text-secondary">No enrollment requests found.</td>
+                                <td colspan="8" class="px-md py-md text-center text-secondary">No enrollment requests found.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($enrollments as $e): ?>
@@ -141,6 +142,16 @@ try {
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-bold border border-amber-200 uppercase">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
                                             </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="py-4 px-md">
+                                        <?php if (!empty($e['resume_path'])): ?>
+                                            <a href="<?= BASE_URL ?>/api/enrollment_resume.php?id=<?= $e['id'] ?>" target="_blank" class="inline-flex items-center gap-1 text-primary hover:text-primary-container font-label-md text-label-md hover:underline" title="View Resume">
+                                                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">description</span>
+                                                View PDF
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="text-secondary text-xs italic">No resume</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="py-4 px-md text-right">

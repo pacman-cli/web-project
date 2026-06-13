@@ -15,7 +15,7 @@ switch ($method) {
     case 'GET':
         try {
             $stmt = $pdo->query("
-                SELECT e.id, e.status, e.rejection_reason, e.enrolled_at, e.reviewed_at,
+                SELECT e.id, e.status, e.rejection_reason, e.resume_path, e.enrolled_at, e.reviewed_at,
                        u_student.id as student_id, u_student.name as student_name, u_student.email as student_email,
                        c.id as course_id, c.title as course_title,
                        u_reviewer.name as reviewer_name
