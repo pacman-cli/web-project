@@ -50,16 +50,23 @@ try {
         }
     }
 
-    // 2. Verify receiver belongs to the same course with correct role relationship
+    // 2. Verify receiver belongs to the same course with valid role relationship
     if ($senderRole === 'student') {
-        // Student can only message instructors assigned to this course
-        $recvCheck = $pdo->prepare("
+        // Student can message instructors assigned to this course OR other enrolled students
+        $isInstructor = $pdo->prepare("
             SELECT 1 FROM instructor_assignments 
             WHERE instructor_id = :rid AND course_id = :cid
         ");
-        $recvCheck->execute(['rid' => $receiverId, 'cid' => $courseId]);
-        if (!$recvCheck->fetch()) {
-            sendJSONError('Unauthorized: You can only message instructors assigned to this course.', 403);
+        $isInstructor->execute(['rid' => $receiverId, 'cid' => $courseId]);
+
+        $isPeer = $pdo->prepare("
+            SELECT 1 FROM enrollments 
+            WHERE student_id = :rid AND course_id = :cid AND status = 'approved'
+        ");
+        $isPeer->execute(['rid' => $receiverId, 'cid' => $courseId]);
+
+        if (!$isInstructor->fetch() && !$isPeer->fetch()) {
+            sendJSONError('Unauthorized: You can only message instructors or students in this course.', 403);
         }
     } elseif ($senderRole === 'instructor') {
         // Instructor can only message students enrolled (approved) in this course

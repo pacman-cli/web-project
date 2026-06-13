@@ -19,11 +19,11 @@ try {
                cert.certificate_hash, cert.file_path, cert.issued_at
         FROM courses c
         JOIN enrollments e ON c.id = e.course_id
-        LEFT JOIN certificates cert ON c.id = cert.course_id AND cert.student_id = :student_id
-        WHERE e.student_id = :student_id AND e.status = 'approved'
+        LEFT JOIN certificates cert ON c.id = cert.course_id AND cert.student_id = :sid
+        WHERE e.student_id = :eid AND e.status = 'approved'
         ORDER BY c.title ASC
     ");
-    $coursesStmt->execute(['student_id' => $studentId]);
+    $coursesStmt->execute(['sid' => $studentId, 'eid' => $studentId]);
     $courses = $coursesStmt->fetchAll();
 
     $claimedCertificates = [];

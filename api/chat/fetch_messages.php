@@ -36,13 +36,21 @@ try {
 
     // 2. Verify partner belongs to the course with valid role relationship
     if ($_SESSION['role'] === 'student') {
-        $partnerCheck = $pdo->prepare("
+        // Partner can be an instructor assigned to this course OR another enrolled student
+        $isInstructor = $pdo->prepare("
             SELECT 1 FROM instructor_assignments 
             WHERE instructor_id = :pid AND course_id = :cid
         ");
-        $partnerCheck->execute(['pid' => $partnerId, 'cid' => $courseId]);
-        if (!$partnerCheck->fetch()) {
-            sendJSONError('Unauthorized: You can only chat with instructors assigned to this course.', 403);
+        $isInstructor->execute(['pid' => $partnerId, 'cid' => $courseId]);
+
+        $isPeer = $pdo->prepare("
+            SELECT 1 FROM enrollments 
+            WHERE student_id = :pid AND course_id = :cid AND status = 'approved'
+        ");
+        $isPeer->execute(['pid' => $partnerId, 'cid' => $courseId]);
+
+        if (!$isInstructor->fetch() && !$isPeer->fetch()) {
+            sendJSONError('Unauthorized: You can only chat with instructors or students in this course.', 403);
         }
     } elseif ($_SESSION['role'] === 'instructor') {
         $partnerCheck = $pdo->prepare("

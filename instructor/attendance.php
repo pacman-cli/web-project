@@ -94,7 +94,7 @@ switch ($method) {
             $stmt = $pdo->prepare("
                 INSERT INTO attendance (schedule_id, student_id, status, date) 
                 VALUES (:schedule_id, :student_id, :status, :date)
-                ON DUPLICATE KEY UPDATE status = :status, marked_at = CURRENT_TIMESTAMP
+                ON DUPLICATE KEY UPDATE status = :status_new, marked_at = CURRENT_TIMESTAMP
             ");
 
             foreach ($studentsList as $record) {
@@ -106,7 +106,8 @@ switch ($method) {
                         'schedule_id' => $scheduleId,
                         'student_id' => $studentId,
                         'status' => $status,
-                        'date' => $date
+                        'date' => $date,
+                        'status_new' => $status
                     ]);
                 }
             }

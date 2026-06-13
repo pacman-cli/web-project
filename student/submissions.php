@@ -143,13 +143,15 @@ switch ($method) {
                 $stmt = $pdo->prepare("
                     INSERT INTO submissions (assignment_id, student_id, file_path, submission_text, status) 
                     VALUES (:assignment_id, :student_id, :file_path, :submission_text, 'submitted')
-                    ON DUPLICATE KEY UPDATE file_path = :file_path, submission_text = :submission_text, status = 'submitted', submitted_at = CURRENT_TIMESTAMP
+                    ON DUPLICATE KEY UPDATE file_path = :file_path_new, submission_text = :submission_text_new, status = 'submitted', submitted_at = CURRENT_TIMESTAMP
                 ");
                 $stmt->execute([
                     'assignment_id' => $assignmentId,
                     'student_id' => $studentId,
                     'file_path' => $dbPath,
-                    'submission_text' => $submissionText
+                    'submission_text' => $submissionText,
+                    'file_path_new' => $dbPath,
+                    'submission_text_new' => $submissionText
                 ]);
 
                 echo json_encode([
