@@ -83,7 +83,7 @@ try {
 
     <section class="text-center">
         <h2 class="font-h2 text-h2 text-on-surface mb-md">Ready to Start Your Musical Journey?</h2>
-        <a href="/auth/register.php" class="inline-block bg-primary text-on-primary px-lg py-sm rounded-lg font-semibold hover:opacity-90 transition-opacity">Join Lyra Academy Today</a>
+        <a href="<?= BASE_URL ?>/auth/register.php" class="inline-block bg-primary text-on-primary px-lg py-sm rounded-lg font-semibold hover:opacity-90 transition-opacity">Join Lyra Academy Today</a>
     </section>
 </main>
 

@@ -53,13 +53,20 @@ try {
             sendJSONError('Unauthorized: You can only chat with instructors or students in this course.', 403);
         }
     } elseif ($_SESSION['role'] === 'instructor') {
-        $partnerCheck = $pdo->prepare("
+        $partnerStudentCheck = $pdo->prepare("
             SELECT 1 FROM enrollments 
             WHERE student_id = :pid AND course_id = :cid AND status = 'approved'
         ");
-        $partnerCheck->execute(['pid' => $partnerId, 'cid' => $courseId]);
-        if (!$partnerCheck->fetch()) {
-            sendJSONError('Unauthorized: You can only chat with students enrolled in this course.', 403);
+        $partnerStudentCheck->execute(['pid' => $partnerId, 'cid' => $courseId]);
+
+        $partnerInstructorCheck = $pdo->prepare("
+            SELECT 1 FROM instructor_assignments 
+            WHERE instructor_id = :pid AND course_id = :cid
+        ");
+        $partnerInstructorCheck->execute(['pid' => $partnerId, 'cid' => $courseId]);
+
+        if (!$partnerStudentCheck->fetch() && !$partnerInstructorCheck->fetch()) {
+            sendJSONError('Unauthorized: You can only chat with students or other instructors assigned to this course.', 403);
         }
     }
 

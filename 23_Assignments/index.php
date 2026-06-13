@@ -103,7 +103,7 @@ try {
                                     </div>
                                 </td>
                                 <td class="px-md py-5 text-right">
-                                    <a href="/25_Recording_Reviews/index.php?assignment_id=<?= $a['id'] ?>" class="inline-flex items-center px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg font-label-md text-label-md transition-all">
+                                    <a href="<?= BASE_URL ?>/25_Recording_Reviews/index.php?assignment_id=<?= $a['id'] ?>" class="inline-flex items-center px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg font-label-md text-label-md transition-all">
                                         <span class="material-symbols-outlined text-[18px] mr-1" aria-hidden="true">grading</span>
                                         Review Submissions
                                     </a>
@@ -203,7 +203,7 @@ try {
         formData.append('description', form.description.value);
         formData.append('due_date', formattedDate);
         formData.append('max_points', parseInt(form.max_points.value));
-        formData.append('_csrf_token', '<?= csrf_token() ?>');
+        formData.append('csrf_token', '<?= csrf_token() ?>');
         
         if (form.assignment_file.files.length > 0) {
             formData.append('assignment_file', form.assignment_file.files[0]);
@@ -212,11 +212,17 @@ try {
         const errorDiv = document.getElementById('assignment-error');
         errorDiv.classList.add('hidden');
 
-        fetch('/instructor/assignments.php', {
+        fetch(BASE_URL + '/instructor/assignments.php', {
             method: 'POST',
             body: formData
         })
-        .then(res => res.json())
+        .then(res => {
+            const ct = res.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+                return res.json();
+            }
+            return res.text().then(text => { throw new Error(text || 'Server returned non-JSON response.'); });
+        })
         .then(resData => {
             if (resData.success) {
                 window.location.reload();
@@ -226,8 +232,8 @@ try {
             }
         })
         .catch(err => {
-            console.error(err);
-            errorDiv.innerText = 'Network error or server failed.';
+            console.error('Assignment creation error:', err);
+            errorDiv.innerText = err.message || 'Network error or server failed.';
             errorDiv.classList.remove('hidden');
         });
     }

@@ -2,6 +2,8 @@
 // config/auth_guard.php
 // Middleware-like access control and session verification helper
 
+require_once __DIR__ . '/app.php';
+
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
@@ -18,7 +20,7 @@ if (session_status() === PHP_SESSION_NONE) {
  */
 function requireAuth() {
     if (!isset($_SESSION['user_id'])) {
-        header('Location: /auth/login.php');
+        header('Location: ' . BASE_URL . '/auth/login.php');
         exit;
     }
 }
@@ -38,7 +40,7 @@ function requireRole($roles) {
         echo "<div style='font-family: sans-serif; text-align: center; margin-top: 100px;'>";
         echo "<h2>Access Denied</h2>";
         echo "<p>Insufficient permissions. Active role '<strong>" . htmlspecialchars($userRole) . "</strong>' is not authorized to access this page.</p>";
-        echo "<p><a href='/auth/logout.php'>Logout</a> or <a href='javascript:history.back()'>Go Back</a></p>";
+        echo "<p><a href='" . BASE_URL . "/auth/logout.php'>Logout</a> or <a href='javascript:history.back()'>Go Back</a></p>";
         echo "</div>";
         exit;
     }

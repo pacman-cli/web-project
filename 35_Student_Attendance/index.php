@@ -246,7 +246,7 @@ try {
                 <h4 class="font-h3 text-h3 mb-xs">Need to request an absence?</h4>
                 <p class="font-body-md text-body-md opacity-90">Please contact your instructor directly at least 48 hours in advance for excused leave.</p>
             </div>
-            <a href="/33_Student_Messages/index.php" class="bg-white text-primary-container px-lg py-sm rounded-lg font-label-md text-label-md font-bold shadow-sm hover:bg-surface-container-low transition-all">
+            <a href="<?= BASE_URL ?>/33_Student_Messages/index.php" class="bg-white text-primary-container px-lg py-sm rounded-lg font-label-md text-label-md font-bold shadow-sm hover:bg-surface-container-low transition-all">
                 Send Message
             </a>
         </div>
@@ -266,7 +266,7 @@ try {
         const container = document.getElementById('participation-list');
         if (!container) return;
 
-        fetch('/student/participation.php?course_id=<?= $selectedCourseId ?>')
+        fetch(BASE_URL + '/student/participation.php?course_id=<?= $selectedCourseId ?>')
             .then(r => r.json())
             .then(d => {
                 if (!d.success || !d.data || d.data.length === 0) {
@@ -296,7 +296,7 @@ try {
     }
 
     function completeSession(sessionId) {
-        fetch('/student/participation.php', {
+        fetch(BASE_URL + '/student/participation.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'complete_session', class_id: sessionId, csrf_token: '<?= csrf_token() ?>' })

@@ -279,7 +279,7 @@ try {
         const errorDiv = document.getElementById('schedule-error');
         errorDiv.classList.add('hidden');
 
-        fetch('/instructor/schedules.php', {
+        fetch(BASE_URL + '/instructor/schedules.php', {
             method: editId > 0 ? 'PUT' : 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
             body: JSON.stringify(data)
@@ -303,7 +303,7 @@ try {
     function deleteSchedule(id) {
         if (!confirm('Are you sure you want to delete this class schedule?')) return;
 
-        fetch('/instructor/schedules.php', {
+        fetch(BASE_URL + '/instructor/schedules.php', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
             body: JSON.stringify({ id: id })

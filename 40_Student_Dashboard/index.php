@@ -151,7 +151,7 @@ function time_elapsed_string($datetime) {
                 <p class="text-body-lg text-outline">You have <?= (int)$upcomingClassesCount ?> active class schedule<?= $upcomingClassesCount != 1 ? 's' : '' ?>.</p>
             </div>
             <div class="flex gap-sm">
-                <a href="/42_Public_Course_Catalog/index.php" class="btn btn-secondary" style="background:rgba(106,26,140,.08);color:#6a1a8c">
+                <a href="<?= BASE_URL ?>/42_Public_Course_Catalog/index.php" class="btn btn-secondary" style="background:rgba(106,26,140,.08);color:#6a1a8c">
                     <span class="material-symbols-outlined" aria-hidden="true">explore</span>
                     Browse Catalog
                 </a>
@@ -204,14 +204,14 @@ function time_elapsed_string($datetime) {
             <section class="lg:col-span-2">
                 <div class="flex items-center justify-between mb-md">
                     <h2 class="section-title mb-0">Active Courses</h2>
-                    <a href="/39_Student_My_Courses/index.php" class="text-label-md font-semibold hover:underline" style="color:#6a1a8c">View All →</a>
+                    <a href="<?= BASE_URL ?>/39_Student_My_Courses/index.php" class="text-label-md font-semibold hover:underline" style="color:#6a1a8c">View All →</a>
                 </div>
 
                 <?php if (empty($activeCourses)): ?>
                     <div class="lms-card px-md py-lg text-center text-outline">
                         <span class="material-symbols-outlined text-4xl mb-2 block" aria-hidden="true">school</span>
                         <p class="text-body-md mb-sm">You're not enrolled in any approved courses yet.</p>
-                        <a href="/42_Public_Course_Catalog/index.php" class="btn btn-primary btn-sm" style="background:#6a1a8c">Browse Course Catalog</a>
+                        <a href="<?= BASE_URL ?>/42_Public_Course_Catalog/index.php" class="btn btn-primary btn-sm" style="background:#6a1a8c">Browse Course Catalog</a>
                     </div>
                 <?php else: ?>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
@@ -246,7 +246,7 @@ function time_elapsed_string($datetime) {
                                             <div class="progress-fill" style="width:<?= $course['progress_percent'] ?>%;background:#6a1a8c"></div>
                                         </div>
                                     </div>
-                                    <a href="/39_Student_My_Courses/index.php?course_id=<?= $course['id'] ?>"
+                                    <a href="<?= BASE_URL ?>/39_Student_My_Courses/index.php?course_id=<?= $course['id'] ?>"
                                        class="btn w-full mt-auto" style="background:#6a1a8c;color:#fff">
                                         Open Course
                                     </a>
@@ -315,25 +315,25 @@ function time_elapsed_string($datetime) {
                         <h2 class="section-title mb-0">Quick Links</h2>
                     </div>
                     <div class="px-md py-md space-y-sm">
-                        <a href="/37_Student_Assignments_1/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(106,26,140,.08);color:#6a1a8c">
+                        <a href="<?= BASE_URL ?>/37_Student_Assignments_1/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(106,26,140,.08);color:#6a1a8c">
                             <span class="material-symbols-outlined" aria-hidden="true">assignment</span> View Assignments
                         </a>
-                        <a href="/41_Student_Schedules/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(106,26,140,.08);color:#6a1a8c">
+                        <a href="<?= BASE_URL ?>/41_Student_Schedules/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(106,26,140,.08);color:#6a1a8c">
                             <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span> My Schedules
                         </a>
-                        <a href="/16_Lesson_Materials/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(106,26,140,.08);color:#6a1a8c">
+                        <a href="<?= BASE_URL ?>/16_Lesson_Materials/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(106,26,140,.08);color:#6a1a8c">
                             <span class="material-symbols-outlined" aria-hidden="true">folder_open</span> Course Materials
                         </a>
-                        <a href="/38_Student_Quizzes/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(106,26,140,.08);color:#6a1a8c">
+                        <a href="<?= BASE_URL ?>/38_Student_Quizzes/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(106,26,140,.08);color:#6a1a8c">
                             <span class="material-symbols-outlined" aria-hidden="true">quiz</span> Take Quizzes
                         </a>
-                        <a href="/35_Student_Attendance/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(106,26,140,.08);color:#6a1a8c">
+                        <a href="<?= BASE_URL ?>/35_Student_Attendance/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(106,26,140,.08);color:#6a1a8c">
                             <span class="material-symbols-outlined" aria-hidden="true">how_to_reg</span> My Attendance
                         </a>
-                        <a href="/33_Student_Messages/index.php" class="btn btn-ghost w-full justify-start gap-sm">
+                        <a href="<?= BASE_URL ?>/33_Student_Messages/index.php" class="btn btn-ghost w-full justify-start gap-sm">
                             <span class="material-symbols-outlined" aria-hidden="true">chat</span> Messages
                         </a>
-                        <a href="/34_Student_Certificates/index.php" class="btn btn-ghost w-full justify-start gap-sm">
+                        <a href="<?= BASE_URL ?>/34_Student_Certificates/index.php" class="btn btn-ghost w-full justify-start gap-sm">
                             <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span> My Certificates
                         </a>
                     </div>

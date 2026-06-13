@@ -51,7 +51,7 @@ try {
                     <p class="text-body-md text-on-surface-variant mb-md"><?= htmlspecialchars($inst['description'] ?? 'Learn to play this beautiful instrument.') ?></p>
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-outline"><?= intval($inst['course_count']) ?> courses available</span>
-                        <a href="/42_Public_Course_Catalog/index.php?instrument_id=<?= $inst['id'] ?>" class="text-primary font-semibold text-sm hover:underline">Browse Courses →</a>
+                        <a href="<?= BASE_URL ?>/42_Public_Course_Catalog/index.php?instrument_id=<?= $inst['id'] ?>" class="text-primary font-semibold text-sm hover:underline">Browse Courses →</a>
                     </div>
                 </div>
             <?php endforeach; ?>

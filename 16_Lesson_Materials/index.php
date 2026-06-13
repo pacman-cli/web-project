@@ -205,7 +205,7 @@ try {
                                                 <span class="material-symbols-outlined text-[20px]" aria-hidden="true">visibility</span>
                                             </button>
                                         <?php endif; ?>
-                                        <a href="/api/download_material.php?id=<?= $m['id'] ?>" class="text-on-surface-variant hover:text-primary transition-colors inline-block mr-3" aria-label="Download <?= htmlspecialchars($m['title']) ?>">
+                                        <a href="<?= BASE_URL ?>/api/download_material.php?id=<?= $m['id'] ?>" class="text-on-surface-variant hover:text-primary transition-colors inline-block mr-3" aria-label="Download <?= htmlspecialchars($m['title']) ?>">
                                             <span class="material-symbols-outlined text-[20px]" aria-hidden="true">download</span>
                                         </a>
                                         <?php if ($role === 'instructor'): ?>
@@ -319,7 +319,7 @@ try {
         const errorDiv = document.getElementById('upload-error');
         errorDiv.classList.add('hidden');
 
-        fetch('/instructor/materials.php', {
+        fetch(BASE_URL + '/instructor/materials.php', {
             method: 'POST',
             headers: {
                 'X-CSRF-Token': '<?= csrf_token() ?>'
@@ -345,7 +345,7 @@ try {
     function deleteMaterial(id) {
         if (!confirm('Are you sure you want to delete this material? This will permanently delete the file.')) return;
 
-        fetch('/instructor/materials.php', {
+        fetch(BASE_URL + '/instructor/materials.php', {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -405,14 +405,14 @@ try {
         document.getElementById('preview-title').textContent = title;
         const content = document.getElementById('preview-content');
         const downloadBtn = document.getElementById('preview-download');
-        downloadBtn.href = `/api/download_material.php?id=${id}`;
+        downloadBtn.href = BASE_URL + `/api/download_material.php?id=${id}`;
         
         if (fileType === 'pdf') {
-            content.innerHTML = `<iframe src="/api/download_material.php?id=${id}" class="w-full h-full min-h-[600px] border-0 rounded-lg" title="PDF Preview"></iframe>`;
+            content.innerHTML = `<iframe src="${BASE_URL}/api/download_material.php?id=${id}" class="w-full h-full min-h-[600px] border-0 rounded-lg" title="PDF Preview"></iframe>`;
         } else if (fileType === 'video') {
-            content.innerHTML = `<video controls class="w-full max-h-[500px] rounded-lg"><source src="/api/download_material.php?id=${id}" type="video/mp4">Your browser does not support video playback.</video>`;
+            content.innerHTML = `<video controls class="w-full max-h-[500px] rounded-lg"><source src="${BASE_URL}/api/download_material.php?id=${id}" type="video/mp4">Your browser does not support video playback.</video>`;
         } else if (fileType === 'audio') {
-            content.innerHTML = `<div class="flex flex-col items-center justify-center py-xl"><span class="material-symbols-outlined text-6xl text-primary mb-md" aria-hidden="true">audio_file</span><audio controls class="w-full max-w-md"><source src="/api/download_material.php?id=${id}" type="audio/mpeg">Your browser does not support audio playback.</audio></div>`;
+            content.innerHTML = `<div class="flex flex-col items-center justify-center py-xl"><span class="material-symbols-outlined text-6xl text-primary mb-md" aria-hidden="true">audio_file</span><audio controls class="w-full max-w-md"><source src="${BASE_URL}/api/download_material.php?id=${id}" type="audio/mpeg">Your browser does not support audio playback.</audio></div>`;
         } else {
             content.innerHTML = `<div class="text-center py-xl"><span class="material-symbols-outlined text-6xl text-outline mb-md" aria-hidden="true">description</span><p class="text-on-surface-variant">Preview not available for this file type. Please download to view.</p></div>`;
         }

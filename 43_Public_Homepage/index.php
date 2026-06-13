@@ -53,9 +53,9 @@ try {
                     Experience institutional reliability blended with artistic precision. From foundational theory to advanced performance masterclasses.
                 </p>
                 <div class="flex flex-wrap gap-md pt-base">
-                    <a class="px-xl py-md rounded-lg font-h3 text-h3 bg-primary text-on-primary shadow-lg hover:shadow-xl transition-all active:scale-95 text-center" href="/42_Public_Course_Catalog/index.php">Browse Courses</a>
+                    <a class="px-xl py-md rounded-lg font-h3 text-h3 bg-primary text-on-primary shadow-lg hover:shadow-xl transition-all active:scale-95 text-center" href="<?= BASE_URL ?>/42_Public_Course_Catalog/index.php">Browse Courses</a>
                     <?php if (!$isLoggedIn): ?>
-                        <a class="px-xl py-md rounded-lg font-h3 text-h3 border border-primary text-primary hover:bg-primary-fixed transition-colors active:scale-95 text-center" href="/auth/register.php">Join Now</a>
+                        <a class="px-xl py-md rounded-lg font-h3 text-h3 border border-primary text-primary hover:bg-primary-fixed transition-colors active:scale-95 text-center" href="<?= BASE_URL ?>/auth/register.php">Join Now</a>
                     <?php endif; ?>
                 </div>
             </div>
@@ -115,7 +115,7 @@ try {
                     <h2 class="font-h2 text-h2 text-on-surface">Featured Masterclasses</h2>
                     <p class="font-body-md text-body-md text-secondary">Our most prestigious courses currently open for enrollment.</p>
                 </div>
-                <a href="/42_Public_Course_Catalog/index.php" class="flex items-center gap-xs font-label-md text-label-md text-primary hover:underline">
+                <a href="<?= BASE_URL ?>/42_Public_Course_Catalog/index.php" class="flex items-center gap-xs font-label-md text-label-md text-primary hover:underline">
                     View All Courses <span aria-hidden="true" class="material-symbols-outlined text-sm">arrow_forward</span>
                 </a>
             </div>
@@ -140,7 +140,7 @@ try {
                                         <span aria-hidden="true" class="material-symbols-outlined text-primary text-[18px]">person</span>
                                         <span class="font-label-md text-label-md text-on-surface-variant"><?= htmlspecialchars($c['instructor_name'] ?? 'TBD') ?></span>
                                     </div>
-                                    <a href="/45_Public_Course_Detail/index.php?course_id=<?= $c['course_id'] ?>" class="text-primary hover:underline font-bold text-xs">Details</a>
+                                    <a href="<?= BASE_URL ?>/45_Public_Course_Detail/index.php?course_id=<?= $c['course_id'] ?>" class="text-primary hover:underline font-bold text-xs">Details</a>
                                 </div>
                             </div>
                         </div>

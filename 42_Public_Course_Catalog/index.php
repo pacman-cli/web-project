@@ -127,7 +127,7 @@ try {
                                     <span class="font-bold text-lg text-primary">$<?= number_format($c['price'], 2) ?></span>
                                     
                                     <?php if (!$isLoggedIn): ?>
-                                        <a href="/auth/login.php" class="px-md py-2 bg-primary text-on-primary font-bold text-xs rounded-lg active:scale-95 transition-all">Enroll Now</a>
+                                        <a href="<?= BASE_URL ?>/auth/login.php" class="px-md py-2 bg-primary text-on-primary font-bold text-xs rounded-lg active:scale-95 transition-all">Enroll Now</a>
                                     <?php elseif ($userRole === 'student'): ?>
                                         <?php if ($c['enrollment_status'] === 'approved'): ?>
                                             <span class="px-3 py-1 bg-green-100 text-green-700 font-bold text-xs rounded-full uppercase">Enrolled</span>
@@ -195,7 +195,7 @@ try {
     function requestEnrollment(courseId) {
         if (!confirm('Would you like to request enrollment in this course? Your request will be sent to the administrator.')) return;
 
-        fetch('/student/enroll.php', {
+        fetch(BASE_URL + '/student/enroll.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

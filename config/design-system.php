@@ -17,6 +17,7 @@
  */
 
 require_once __DIR__ . '/csrf.php';
+require_once __DIR__ . '/app.php';
 
 // ── Colour Palettes (role-aware accent layer) ─────────────────────────────────
 $LMS_PALETTES = [
@@ -501,6 +502,9 @@ function lms_head(string $title, string $role = 'admin', array $extra = []): voi
     <title><?= htmlspecialchars($title) ?> | Lyra Academy</title>
     <meta name="description" content="Lyra Academy – Music School Learning Management System"/>
 
+    <!-- LMS Layout Foundation (structural CSS, loaded before Tailwind so utilities override) -->
+    <link rel="stylesheet" href="<?= BASE_URL ?>/config/layout.css"/>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
@@ -518,7 +522,10 @@ function lms_head(string $title, string $role = 'admin', array $extra = []): voi
     <!-- LMS Base Styles -->
     <style>
         <?= lms_base_styles() ?>
-    </style>
+    </script>
+
+    <!-- BASE_URL for JavaScript fetch() calls -->
+    <script>window.BASE_URL = '<?= BASE_URL ?>';</script>
     <?php foreach ($extra as $tag) echo $tag . "\n"; ?>
 <?php }
 
@@ -561,7 +568,7 @@ function lms_sidebar(string $role, string $activeHref = ''): void {
                 $isActive = ($item['href'] === $activeHref) || (rtrim($_SERVER['PHP_SELF'], '/') === rtrim($item['href'], '/'));
                 $activeClass = $isActive ? 'active' : 'text-secondary hover:bg-surface-container';
                 ?>
-                <a href="<?= htmlspecialchars($item['href']) ?>"
+                <a href="<?= BASE_URL . htmlspecialchars($item['href']) ?>"
                    class="nav-item <?= $activeClass ?>"
                    <?= $isActive ? 'aria-current="page"' : '' ?>>
                     <span class="material-symbols-outlined <?= $isActive ? 'icon-fill' : '' ?> shrink-0"
@@ -576,7 +583,7 @@ function lms_sidebar(string $role, string $activeHref = ''): void {
 
         <!-- Footer: Logout + User -->
         <div class="mt-auto pt-md border-t border-outline-variant">
-            <form action="/api/auth/logout.php" method="POST" class="m-0">
+            <form action="<?= BASE_URL ?>/auth/logout.php" method="POST" class="m-0">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token()) ?>">
                 <button type="submit"
                    class="nav-item text-secondary hover:bg-surface-container w-full text-left cursor-pointer"
@@ -674,11 +681,11 @@ function lms_public_navbar(string $activeHref = ''): void {
     $dashboardHref = '/';
     if ($isLoggedIn) {
         if ($userRole === 'student') {
-            $dashboardHref = '/40_Student_Dashboard/index.php';
+            $dashboardHref = BASE_URL . '/40_Student_Dashboard/index.php';
         } elseif ($userRole === 'instructor') {
-            $dashboardHref = '/17_Instructor_Dashboard/index.php';
+            $dashboardHref = BASE_URL . '/17_Instructor_Dashboard/index.php';
         } elseif ($userRole === 'admin') {
-            $dashboardHref = '/02_Admin_Dashboard/index.php';
+            $dashboardHref = BASE_URL . '/02_Admin_Dashboard/index.php';
         }
     }
     $publicNavItems = $LMS_SIDEBARS['guest']['nav'] ?? [];
@@ -687,7 +694,7 @@ function lms_public_navbar(string $activeHref = ''): void {
     <nav class="fixed top-0 left-0 w-full h-[64px] bg-surface border-b border-outline-variant shadow-sm z-50 flex justify-between items-center px-md">
         <div class="flex justify-between items-center w-full max-w-container-max mx-auto h-full">
             <div class="flex items-center gap-md">
-                <a href="/43_Public_Homepage/index.php" class="font-h2 text-h2 text-primary font-bold tracking-tight">Lyra Academy</a>
+                <a href="<?= BASE_URL ?>/43_Public_Homepage/index.php" class="font-h2 text-h2 text-primary font-bold tracking-tight">Lyra Academy</a>
                 <div class="hidden md:flex items-center gap-md ml-lg">
                     <?php foreach ($publicNavItems as $item):
                         $isActive = ($activeHref === $item['href'])
@@ -697,7 +704,7 @@ function lms_public_navbar(string $activeHref = ''): void {
                             ? 'text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md'
                             : 'text-secondary hover:text-primary transition-colors font-label-md text-label-md';
                     ?>
-                        <a class="<?= $linkClass ?>" href="<?= htmlspecialchars($item['href']) ?>">
+                        <a class="<?= $linkClass ?>" href="<?= BASE_URL . htmlspecialchars($item['href']) ?>">
                             <?= htmlspecialchars($item['label']) ?>
                         </a>
                     <?php endforeach; ?>
@@ -706,14 +713,14 @@ function lms_public_navbar(string $activeHref = ''): void {
             <div class="flex items-center gap-sm">
                 <?php if ($isLoggedIn): ?>
                     <span class="text-body-md text-on-surface font-semibold hidden sm:inline">Hello, <?= htmlspecialchars($userName) ?></span>
-                    <a href="<?= htmlspecialchars($dashboardHref) ?>" class="px-md py-xs rounded-lg font-label-md text-label-md bg-primary text-on-primary hover:opacity-90 active:scale-95 transition-all">Dashboard</a>
-                    <form action="/api/auth/logout.php" method="POST" class="inline m-0">
+                    <a href="<?= BASE_URL . htmlspecialchars($dashboardHref) ?>" class="px-md py-xs rounded-lg font-label-md text-label-md bg-primary text-on-primary hover:opacity-90 active:scale-95 transition-all">Dashboard</a>
+                    <form action="<?= BASE_URL ?>/auth/logout.php" method="POST" class="inline m-0">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token()) ?>">
                         <button type="submit" class="px-md py-xs rounded-lg font-label-md text-label-md bg-secondary text-white hover:opacity-90 active:scale-95 transition-all cursor-pointer">Logout</button>
                     </form>
                 <?php else: ?>
-                    <a href="/auth/login.php" class="px-md py-xs rounded-lg font-label-md text-label-md text-primary hover:bg-surface-container-high transition-all">Login</a>
-                    <a href="/auth/register.php" class="px-md py-xs rounded-lg font-label-md text-label-md bg-primary text-on-primary hover:opacity-90 active:scale-95 transition-all">Join Now</a>
+                    <a href="<?= BASE_URL ?>/auth/login.php" class="px-md py-xs rounded-lg font-label-md text-label-md text-primary hover:bg-surface-container-high transition-all">Login</a>
+                    <a href="<?= BASE_URL ?>/auth/register.php" class="px-md py-xs rounded-lg font-label-md text-label-md bg-primary text-on-primary hover:opacity-90 active:scale-95 transition-all">Join Now</a>
                 <?php endif; ?>
             </div>
         </div>

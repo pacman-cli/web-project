@@ -73,7 +73,7 @@ requireRole('admin');
                 <section class="lms-card overflow-hidden">
                     <div class="flex items-center justify-between px-md py-md border-b border-outline-variant">
                         <h2 class="section-title mb-0">Recent Enrollment Requests</h2>
-                        <a href="/11_Enrollment_Requests/index.php" class="text-label-md font-semibold hover:underline" style="color:#003d9b">View All →</a>
+                        <a href="<?= BASE_URL ?>/11_Enrollment_Requests/index.php" class="text-label-md font-semibold hover:underline" style="color:#003d9b">View All →</a>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="lms-table">
@@ -131,16 +131,16 @@ requireRole('admin');
                         <h2 class="section-title mb-0">Quick Actions</h2>
                     </div>
                     <div class="px-md py-md space-y-sm">
-                        <a href="/01_Instructor_Management/index.php" class="btn btn-secondary w-full justify-start gap-sm">
+                        <a href="<?= BASE_URL ?>/01_Instructor_Management/index.php" class="btn btn-secondary w-full justify-start gap-sm">
                             <span class="material-symbols-outlined" aria-hidden="true">person_add</span> Add Instructor
                         </a>
-                        <a href="/05_Course_Management/index.php" class="btn btn-secondary w-full justify-start gap-sm">
+                        <a href="<?= BASE_URL ?>/05_Course_Management/index.php" class="btn btn-secondary w-full justify-start gap-sm">
                             <span class="material-symbols-outlined" aria-hidden="true">add_circle</span> Create Course
                         </a>
-                        <a href="/11_Enrollment_Requests/index.php" class="btn btn-secondary w-full justify-start gap-sm">
+                        <a href="<?= BASE_URL ?>/11_Enrollment_Requests/index.php" class="btn btn-secondary w-full justify-start gap-sm">
                             <span class="material-symbols-outlined" aria-hidden="true">checklist</span> Review Enrollments
                         </a>
-                        <a href="/15_Reports_Analytics/index.php" class="btn btn-ghost w-full justify-start gap-sm">
+                        <a href="<?= BASE_URL ?>/15_Reports_Analytics/index.php" class="btn btn-ghost w-full justify-start gap-sm">
                             <span class="material-symbols-outlined" aria-hidden="true">analytics</span> View Reports
                         </a>
                     </div>
@@ -159,7 +159,7 @@ function escapeHTML(str) {
 }
 document.addEventListener("DOMContentLoaded", () => {
     // Fetch metrics
-    fetch("/admin/reports.php")
+    fetch(BASE_URL + "/admin/reports.php")
         .then(r => r.json())
         .then(data => {
             if (!data.success) return;
@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(err => console.error("Metrics error:", err));
 
     // Fetch recent enrollments
-    fetch("/admin/enrollments.php")
+    fetch(BASE_URL + "/admin/enrollments.php")
         .then(r => r.json())
         .then(data => {
             const tbody = document.getElementById("recent-enrollments-tbody");

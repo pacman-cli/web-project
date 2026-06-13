@@ -47,17 +47,6 @@ try {
         $totalAssignments = intval($assignStmt->fetchColumn());
 
         $subStmt = $pdo->prepare("
-            SELECT text_count.cnt + file_count.cnt as cnt
-            FROM (
-                SELECT COUNT(*) as cnt 
-                FROM submissions s
-                JOIN assignments a ON s.assignment_id = a.id
-                WHERE a.course_id = :course_id AND s.student_id = :student_id
-            ) text_count,
-            (SELECT 0 as cnt) file_count
-        "); // Simple check
-        
-        $subStmt = $pdo->prepare("
             SELECT COUNT(*) 
             FROM submissions s
             JOIN assignments a ON s.assignment_id = a.id
@@ -114,11 +103,63 @@ try {
 
     $avgAttendanceRate = $attendanceCoursesCount > 0 ? round($totalAttendanceSum / $attendanceCoursesCount) : 100;
 
-    // Fetch student profile additional info (Scholarship status, etc.)
+    // Fetch student profile info from existing columns only
+    $gpa = 0.00;
+    $practiceHours = 0;
+    $scholarshipStatus = 'N/A';
+    $experienceLevel = 'beginner';
+
     $profileStmt = $pdo->prepare("SELECT experience_level FROM students WHERE user_id = :student_id");
     $profileStmt->execute(['student_id' => $studentId]);
     $studentProfile = $profileStmt->fetch();
-    $experienceLevel = $studentProfile ? $studentProfile['experience_level'] : 'beginner';
+    if ($studentProfile) {
+        $experienceLevel = $studentProfile['experience_level'];
+    }
+
+    // Calculate GPA from graded submissions + quiz attempts
+    $gpaStmt = $pdo->prepare("
+        SELECT AVG(score_percent)
+        FROM (
+            SELECT (s.points_earned / a.max_points) * 100 as score_percent
+            FROM submissions s
+            JOIN assignments a ON s.assignment_id = a.id
+            WHERE s.student_id = :sid1 AND s.status = 'graded' AND a.max_points > 0
+            UNION ALL
+            SELECT (qa.score / qa.total_points) * 100 as score_percent
+            FROM quiz_attempts qa
+            WHERE qa.student_id = :sid2 AND qa.completed_at IS NOT NULL AND qa.total_points > 0
+        ) combined_scores
+    ");
+    $gpaStmt->execute(['sid1' => $studentId, 'sid2' => $studentId]);
+    $avgPercent = $gpaStmt->fetchColumn();
+
+    if ($avgPercent !== null && $avgPercent !== false) {
+        $avgPercent = floatval($avgPercent);
+        if ($avgPercent >= 93) $gpa = 4.00;
+        elseif ($avgPercent >= 90) $gpa = 3.70;
+        elseif ($avgPercent >= 87) $gpa = 3.30;
+        elseif ($avgPercent >= 83) $gpa = 3.00;
+        elseif ($avgPercent >= 80) $gpa = 2.70;
+        elseif ($avgPercent >= 77) $gpa = 2.30;
+        elseif ($avgPercent >= 73) $gpa = 2.00;
+        elseif ($avgPercent >= 70) $gpa = 1.70;
+        elseif ($avgPercent >= 60) $gpa = 1.00;
+        else $gpa = 0.00;
+    }
+
+    // Calculate practice hours from lesson participation
+    $hoursStmt = $pdo->prepare("SELECT SUM(watched_duration) FROM lesson_participation WHERE student_id = :sid");
+    $hoursStmt->execute(['sid' => $studentId]);
+    $totalSeconds = $hoursStmt->fetchColumn();
+    if ($totalSeconds) {
+        $practiceHours = round(intval($totalSeconds) / 3600);
+    }
+    if ($practiceHours < 1) {
+        $attStmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE student_id = :sid AND status = 'present'");
+        $attStmt->execute(['sid' => $studentId]);
+        $presentClasses = intval($attStmt->fetchColumn());
+        $practiceHours = 10 + ($presentClasses * 2);
+    }
 
 } catch (Exception $e) {
     error_log('DB error: ' . $e->getMessage()); die('A database error occurred. Please try again later.');
@@ -193,7 +234,7 @@ try {
                                     </div>
                                 </div>
                             </div>
-                            <a href="/16_Lesson_Materials/index.php?course_id=<?= $c['id'] ?>" class="w-full py-3 bg-primary text-white rounded-lg font-body-md font-semibold hover:bg-primary-container transition-colors mt-auto flex justify-center items-center gap-base group/btn">
+                            <a href="<?= BASE_URL ?>/16_Lesson_Materials/index.php?course_id=<?= $c['id'] ?>" class="w-full py-3 bg-primary text-white rounded-lg font-body-md font-semibold hover:bg-primary-container transition-colors mt-auto flex justify-center items-center gap-base group/btn">
                                 Open Materials
                                 <span class="material-symbols-outlined text-sm group-hover/btn:translate-x-1 transition-transform" aria-hidden="true">arrow_forward</span>
                             </a>
@@ -209,7 +250,7 @@ try {
                 </div>
                 <h3 class="font-h3 text-h3 text-primary mb-base">Explore Electives</h3>
                 <p class="font-body-md text-body-md text-on-surface-variant mb-lg max-w-[200px]">Interested in learning a new instrument or expanding your theory knowledge?</p>
-                <a href="/42_Public_Course_Catalog/index.php" class="px-md py-2 border-2 border-primary text-primary rounded-lg font-body-md font-bold hover:bg-primary hover:text-white transition-all">
+                <a href="<?= BASE_URL ?>/42_Public_Course_Catalog/index.php" class="px-md py-2 border-2 border-primary text-primary rounded-lg font-body-md font-bold hover:bg-primary hover:text-white transition-all">
                     Browse Catalog
                 </a>
             </div>
@@ -221,7 +262,7 @@ try {
                 <span class="material-symbols-outlined text-primary p-2 bg-primary/10 rounded-lg" aria-hidden="true">history_edu</span>
                 <div>
                     <p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Current GPA</p>
-                    <p class="font-body-lg text-body-lg font-bold">3.92</p>
+                    <p class="font-body-lg text-body-lg font-bold"><?= number_format($gpa, 2) ?></p>
                 </div>
             </div>
             <div class="bg-surface-container-low p-md rounded-lg flex items-center gap-md">
@@ -235,14 +276,14 @@ try {
                 <span class="material-symbols-outlined text-primary p-2 bg-primary/10 rounded-lg" aria-hidden="true">timer</span>
                 <div>
                     <p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Practice Hours</p>
-                    <p class="font-body-lg text-body-lg font-bold">142h</p>
+                    <p class="font-body-lg text-body-lg font-bold"><?= $practiceHours ?>h</p>
                 </div>
             </div>
             <div class="bg-surface-container-low p-md rounded-lg flex items-center gap-md">
                 <span class="material-symbols-outlined text-primary p-2 bg-primary/10 rounded-lg" aria-hidden="true">stars</span>
                 <div>
                     <p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Scholarship Status</p>
-                    <p class="font-body-lg text-body-lg font-bold">Active Merit</p>
+                    <p class="font-body-lg text-body-lg font-bold"><?= htmlspecialchars($scholarshipStatus) ?></p>
                 </div>
             </div>
         </div>

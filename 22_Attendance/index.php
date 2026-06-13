@@ -1,6 +1,6 @@
 <?php
 // 22_Attendance/index.php
-// Instructor portal for marking student attendance
+// Instructor portal for marking student attendance — fully dynamic (AJAX-driven)
 
 require_once __DIR__ . '/../config/auth_guard.php';
 require_once __DIR__ . '/../config/design-system.php';
@@ -9,14 +9,8 @@ requireRole('instructor');
 
 $pdo = require_once __DIR__ . '/../config/db.php';
 $instructorId = $_SESSION['user_id'];
-$instructorName = $_SESSION['name'];
-
-$courseId = intval($_GET['course_id'] ?? 0);
-$date = trim($_GET['date'] ?? date('Y-m-d'));
-$scheduleId = intval($_GET['schedule_id'] ?? 0);
 
 try {
-    // 1. Fetch assigned courses
     $coursesStmt = $pdo->prepare("
         SELECT c.id, c.title
         FROM courses c
@@ -26,308 +20,403 @@ try {
     ");
     $coursesStmt->execute(['instructor_id' => $instructorId]);
     $courses = $coursesStmt->fetchAll();
-
-    // If no course selected, pick first
-    if ($courseId <= 0 && !empty($courses)) {
-        $courseId = intval($courses[0]['id']);
-    }
-
-    // 2. Fetch schedules for the selected course
-    $schedules = [];
-    if ($courseId > 0) {
-        $schedulesStmt = $pdo->prepare("
-            SELECT s.id, s.start_time, s.end_time, s.day_of_week, s.location_detail
-            FROM schedules s
-            WHERE s.course_id = :course_id AND s.instructor_id = :instructor_id
-            ORDER BY FIELD(s.day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), s.start_time ASC
-        ");
-        $schedulesStmt->execute(['course_id' => $courseId, 'instructor_id' => $instructorId]);
-        $schedules = $schedulesStmt->fetchAll();
-    }
-
-    // If no schedule selected, pick first schedule of the course
-    if ($scheduleId <= 0 && !empty($schedules)) {
-        $scheduleId = intval($schedules[0]['id']);
-    }
-
-    // 3. Fetch students and their current attendance records
-    $students = [];
-    $selectedSchedule = null;
-    if ($scheduleId > 0) {
-        // Find selected schedule details
-        foreach ($schedules as $s) {
-            if (intval($s['id']) === $scheduleId) {
-                $selectedSchedule = $s;
-                break;
-            }
-        }
-
-        $studentsStmt = $pdo->prepare("
-            SELECT u.id as student_id, u.name as student_name, u.email as student_email,
-                   att.status as attendance_status
-            FROM users u
-            JOIN students s ON u.id = s.user_id
-            JOIN enrollments e ON u.id = e.student_id AND e.course_id = :course_id
-            LEFT JOIN attendance att ON u.id = att.student_id AND att.schedule_id = :schedule_id AND att.date = :date
-            WHERE e.status = 'approved'
-            ORDER BY u.name ASC
-        ");
-        $studentsStmt->execute([
-            'course_id' => $courseId,
-            'schedule_id' => $scheduleId,
-            'date' => $date
-        ]);
-        $students = $studentsStmt->fetchAll();
-    }
-
 } catch (Exception $e) {
-    error_log('DB error: ' . $e->getMessage()); die('A database error occurred. Please try again later.');
+    error_log('DB error: ' . $e->getMessage());
+    die('A database error occurred. Please try again later.');
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <?php lms_head('Attendance', 'instructor'); ?>
+<style>
+    @keyframes toast-in { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes toast-out { from { opacity:1; } to { opacity:0; transform:translateY(12px); } }
+    .toast-enter { animation: toast-in .25s ease-out; }
+    .toast-exit { animation: toast-out .25s ease-in forwards; }
+</style>
 </head>
 <body class="bg-background text-on-background">
 
 <?php lms_sidebar('instructor', '/22_Attendance/index.php'); ?>
-
 <?php lms_topbar('instructor', 'Attendance'); ?>
 
-<!-- Main Body Content -->
 <main id="lms-main-content" class="lms-main">
-    <!-- Header Section -->
     <div class="mb-lg">
         <h2 class="font-h1 text-h1 text-on-surface">Record Attendance</h2>
-        <p class="font-body-md text-body-md text-secondary mt-xs">Record and review lesson participation</p>
+        <p class="font-body-md text-body-md text-secondary mt-xs">Select a course, date, and schedule to mark student attendance</p>
     </div>
 
     <!-- Filters -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
         <div class="flex flex-col gap-xs">
             <label for="course-select" class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Course</label>
-            <select id="course-select" onchange="reloadPage()" class="border border-outline-variant rounded-lg p-sm bg-surface-container-lowest text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            <select id="course-select" class="border border-outline-variant rounded-lg p-sm bg-surface-container-lowest text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none">
                 <option value="">Select a course...</option>
                 <?php foreach ($courses as $c): ?>
-                    <option value="<?= $c['id'] ?>" <?= $c['id'] == $courseId ? 'selected' : '' ?>><?= htmlspecialchars($c['title']) ?></option>
+                    <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['title']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
         <div class="flex flex-col gap-xs">
             <label for="date-select" class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Date</label>
-            <input id="date-select" onchange="reloadPage()" class="border border-outline-variant rounded-lg p-sm bg-surface-container-lowest text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none" type="date" value="<?= htmlspecialchars($date) ?>"/>
+            <input id="date-select" type="date" value="<?= date('Y-m-d') ?>" class="border border-outline-variant rounded-lg p-sm bg-surface-container-lowest text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>
         </div>
         <div class="flex flex-col gap-xs">
             <label for="schedule-select" class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Schedule Session</label>
-            <select id="schedule-select" onchange="reloadPage()" class="border border-outline-variant rounded-lg p-sm bg-surface-container-lowest text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            <select id="schedule-select" class="border border-outline-variant rounded-lg p-sm bg-surface-container-lowest text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none">
                 <option value="">Select a session...</option>
-                <?php foreach ($schedules as $s): ?>
-                    <option value="<?= $s['id'] ?>" <?= $s['id'] == $scheduleId ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($s['day_of_week']) ?>: <?= date('h:i A', strtotime($s['start_time'])) ?> - <?= date('h:i A', strtotime($s['end_time'])) ?>
-                    </option>
-                <?php endforeach; ?>
             </select>
         </div>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-lg">
-        <!-- Session Details (33%) -->
+        <!-- Session Details -->
         <div class="w-full lg:w-1/3">
             <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-sm">
                 <h3 class="font-h3 text-h3 text-on-surface mb-md">Session Details</h3>
-                <div class="space-y-sm">
-                    <div class="flex justify-between py-2 border-b border-outline-variant">
-                        <span class="text-secondary font-body-md">Session Date</span>
-                        <span class="font-semibold text-on-surface font-body-md"><?= date('M d, Y', strtotime($date)) ?></span>
-                    </div>
-                    <div class="flex justify-between py-2 border-b border-outline-variant">
-                        <span class="text-secondary font-body-md">Session Time</span>
-                        <span class="font-semibold text-on-surface font-body-md">
-                            <?= $selectedSchedule ? date('h:i A', strtotime($selectedSchedule['start_time'])) . ' - ' . date('h:i A', strtotime($selectedSchedule['end_time'])) : 'N/A' ?>
-                        </span>
-                    </div>
-                    <div class="flex justify-between py-2 border-b border-outline-variant">
-                        <span class="text-secondary font-body-md">Location</span>
-                        <span class="font-semibold text-on-surface font-body-md">
-                            <?= $selectedSchedule ? htmlspecialchars($selectedSchedule['location_detail']) : 'N/A' ?>
-                        </span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-secondary font-body-md">Enrolled Students</span>
-                        <span class="font-semibold text-primary font-body-md"><?= count($students) ?> Students</span>
-                    </div>
+                <div id="session-details-body" class="space-y-sm">
+                    <p class="text-secondary font-body-md">Select a course and schedule to view details.</p>
                 </div>
             </div>
         </div>
 
-        <!-- Attendance Table (66%) -->
+        <!-- Attendance Roster -->
         <div class="w-full lg:w-2/3">
             <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm flex flex-col h-full overflow-hidden">
                 <div class="p-md bg-surface-container-low border-b border-outline-variant flex justify-between items-center">
                     <h3 class="font-h3 text-h3 text-on-surface font-bold">Attendance Roster</h3>
-                    <div>
-                        <button onclick="markAll('present')" class="px-3 py-1 bg-surface-container-lowest border border-outline-variant rounded-full text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container-high transition-colors">
-                            Mark All Present
-                        </button>
-                    </div>
+                    <div id="mark-all-container"></div>
                 </div>
-                <div class="flex-1 overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-surface-container-low">
-                            <tr>
-                                <th class="px-md py-3 font-label-sm text-label-sm text-secondary uppercase tracking-wider">Student Name</th>
-                                <th class="px-md py-3 font-label-sm text-label-sm text-secondary uppercase tracking-wider">Status Selection</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-outline-variant">
-                            <?php if ($scheduleId <= 0): ?>
-                                <tr>
-                                    <td colspan="2" class="px-md py-8 text-center text-on-surface-variant">Please select a schedule session above to mark attendance.</td>
-                                </tr>
-                            <?php elseif (empty($students)): ?>
-                                <tr>
-                                    <td colspan="2" class="px-md py-8 text-center text-on-surface-variant">No students enrolled in this course.</td>
-                                </tr>
-                            <?php else: ?>
-                                <?php foreach ($students as $stu): ?>
-                                    <tr class="hover:bg-surface-container-low transition-colors student-attendance-row" data-student-id="<?= $stu['student_id'] ?>">
-                                        <td class="px-md py-4">
-                                            <span class="font-semibold text-on-surface font-body-md"><?= htmlspecialchars($stu['student_name']) ?></span>
-                                            <p class="text-xs text-outline"><?= htmlspecialchars($stu['student_email']) ?></p>
-                                        </td>
-                                        <td class="px-md py-4">
-                                            <div class="flex bg-surface-container-low p-1 rounded-lg w-fit attendance-btn-group">
-                                                <button onclick="setStatus(this, 'present')" class="px-3 py-1.5 rounded-md text-xs font-semibold btn-present <?= $stu['attendance_status'] === 'present' ? 'bg-primary text-on-primary' : 'text-secondary hover:text-on-surface' ?>">Present</button>
-                                                <button onclick="setStatus(this, 'absent')" class="px-3 py-1.5 rounded-md text-xs font-semibold btn-absent <?= $stu['attendance_status'] === 'absent' ? 'bg-error text-white' : 'text-secondary hover:text-on-surface' ?>">Absent</button>
-                                                <button onclick="setStatus(this, 'excused')" class="px-3 py-1.5 rounded-md text-xs font-semibold btn-excused <?= $stu['attendance_status'] === 'excused' ? 'bg-secondary text-on-secondary' : 'text-secondary hover:text-on-surface' ?>">Excused</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                <div id="roster-body" class="flex-1 overflow-x-auto p-md text-center text-on-surface-variant">
+                    Select a schedule to mark attendance.
                 </div>
-                <?php if ($scheduleId > 0 && !empty($students)): ?>
-                    <div class="p-md bg-surface-container-low border-t border-outline-variant flex justify-end">
-                        <button onclick="saveAttendance()" class="bg-primary text-on-primary px-xl py-3 rounded-lg font-label-md text-label-md font-semibold hover:opacity-95 active:opacity-90 shadow-sm transition-all">
-                            Save Attendance
-                        </button>
-                    </div>
-                <?php endif; ?>
             </div>
         </div>
     </div>
 </main>
 
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-[200] space-y-sm"></div>
+
 <script>
-    const studentStatusMap = {};
+const CSRF_TOKEN = '<?= csrf_token() ?>';
+const TODAY = '<?= date('Y-m-d') ?>';
 
-    // Initialize map with current statuses
-    document.addEventListener("DOMContentLoaded", () => {
-        const rows = document.querySelectorAll(".student-attendance-row");
-        rows.forEach(row => {
-            const studentId = row.getAttribute("data-student-id");
-            let initialStatus = "";
-            if (row.querySelector(".btn-present").classList.contains("bg-primary")) {
-                initialStatus = "present";
-            } else if (row.querySelector(".btn-absent").classList.contains("bg-error")) {
-                initialStatus = "absent";
-            } else if (row.querySelector(".btn-excused").classList.contains("bg-secondary")) {
-                initialStatus = "excused";
-            }
-            studentStatusMap[studentId] = initialStatus;
-        });
-    });
+let currentScheduleId = 0;
+let currentDate = TODAY;
+let studentStatusMap = {};
+let currentScheduleData = null;
 
-    function reloadPage() {
-        const courseId = document.getElementById("course-select").value;
-        const date = document.getElementById("date-select").value;
-        const scheduleId = document.getElementById("schedule-select").value;
-        window.location.search = `?course_id=${courseId}&date=${date}&schedule_id=${scheduleId}`;
+document.addEventListener('DOMContentLoaded', () => {
+    const courseSelect = document.getElementById('course-select');
+    const dateInput = document.getElementById('date-select');
+
+    courseSelect.addEventListener('change', onCourseChange);
+    dateInput.addEventListener('change', onDateChange);
+    document.getElementById('schedule-select').addEventListener('change', onScheduleChange);
+
+    if (courseSelect.value) {
+        loadSchedules(parseInt(courseSelect.value));
     }
+});
 
-    function setStatus(btn, status) {
-        const row = btn.closest(".student-attendance-row");
-        const studentId = row.getAttribute("data-student-id");
-        studentStatusMap[studentId] = status;
-
-        // Reset all buttons in the row
-        const btns = row.querySelectorAll(".attendance-btn-group button");
-        btns.forEach(b => {
-            b.className = "px-3 py-1.5 rounded-md text-xs font-semibold text-secondary hover:text-on-surface";
-        });
-
-        // Highlight active one
-        if (status === 'present') {
-            btn.className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-on-primary";
-        } else if (status === 'absent') {
-            btn.className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-error text-white";
-        } else if (status === 'excused') {
-            btn.className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-secondary text-on-secondary";
-        }
+function onCourseChange() {
+    const courseId = document.getElementById('course-select').value;
+    currentScheduleId = 0;
+    currentScheduleData = null;
+    studentStatusMap = {};
+    updateSessionDetailsEmpty();
+    updateRosterEmpty('Select a schedule to mark attendance.');
+    document.getElementById('mark-all-container').innerHTML = '';
+    if (courseId) {
+        loadSchedules(parseInt(courseId));
+    } else {
+        document.getElementById('schedule-select').innerHTML = '<option value="">Select a session...</option>';
     }
+}
 
-    function markAll(status) {
-        const rows = document.querySelectorAll(".student-attendance-row");
-        rows.forEach(row => {
-            const studentId = row.getAttribute("data-student-id");
-            studentStatusMap[studentId] = status;
-            
-            // Trigger UI update
-            const btn = row.querySelector(`.btn-${status}`);
-            if (btn) {
-                setStatus(btn, status);
-            }
-        });
+function onDateChange() {
+    currentDate = document.getElementById('date-select').value || TODAY;
+    if (currentScheduleId > 0) {
+        loadStudents(currentScheduleId, currentDate);
     }
+}
 
-    function saveAttendance() {
-        const scheduleId = <?= $scheduleId ?>;
-        const date = "<?= htmlspecialchars($date) ?>";
+function onScheduleChange() {
+    const val = document.getElementById('schedule-select').value;
+    currentScheduleId = val ? parseInt(val) : 0;
+    if (currentScheduleId > 0) {
+        loadStudents(currentScheduleId, currentDate);
+    } else {
+        updateSessionDetailsEmpty();
+        updateRosterEmpty('Select a schedule to mark attendance.');
+        document.getElementById('mark-all-container').innerHTML = '';
+    }
+}
 
-        const attendanceList = [];
-        for (const [studentId, status] of Object.entries(studentStatusMap)) {
-            if (status) {
-                attendanceList.push({
-                    student_id: parseInt(studentId),
-                    status: status
-                });
-            }
-        }
+function loadSchedules(courseId) {
+    const select = document.getElementById('schedule-select');
+    select.innerHTML = '<option value="">Loading sessions...</option>';
 
-        if (attendanceList.length === 0) {
-            alert("Please select status for at least one student.");
-            return;
-        }
-
-        fetch("/instructor/attendance.php", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-Token": "<?= csrf_token() ?>"
-            },
-            body: JSON.stringify({
-                schedule_id: scheduleId,
-                date: date,
-                attendance: attendanceList
-            })
-        })
-        .then(res => res.json())
+    fetch(BASE_URL + `/instructor/attendance.php?action=schedules&course_id=${courseId}`)
+        .then(r => r.json())
         .then(data => {
-            if (data.success) {
-                alert("Attendance recorded successfully!");
-                window.location.reload();
+            if (data.success && data.data.length > 0) {
+                let html = '<option value="">Select a session...</option>';
+                data.data.forEach(s => {
+                    html += `<option value="${s.id}">${escapeHtml(s.day_of_week)}: ${formatTime(s.start_time)} - ${formatTime(s.end_time)}</option>`;
+                });
+                select.innerHTML = html;
+                currentScheduleId = data.data[0].id;
+                select.value = currentScheduleId;
+                loadStudents(currentScheduleId, currentDate);
             } else {
-                alert(data.error || "Failed to record attendance.");
+                select.innerHTML = '<option value="">No sessions found</option>';
+                updateRosterEmpty('No schedule sessions found for this course.');
+                updateSessionDetailsEmpty();
             }
         })
         .catch(err => {
             console.error(err);
-            alert("Error saving attendance.");
+            select.innerHTML = '<option value="">Error loading sessions</option>';
+            showToast('Failed to load schedule sessions.', 'error');
         });
+}
+
+function loadStudents(scheduleId, date) {
+    const rosterBody = document.getElementById('roster-body');
+    rosterBody.innerHTML = '<div class="py-8 text-center text-secondary"><span class="material-symbols-outlined animate-spin mr-2" aria-hidden="true">progress_activity</span>Loading students...</div>';
+
+    fetch(BASE_URL + `/instructor/attendance.php?schedule_id=${scheduleId}&date=${date}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                renderRoster(data.data);
+                updateSessionDetails(scheduleId, data.data.length);
+            } else {
+                rosterBody.innerHTML = `<div class="py-8 text-center text-error">${escapeHtml(data.error || 'Failed to load students.')}</div>`;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            rosterBody.innerHTML = '<div class="py-8 text-center text-error">Network error loading students.</div>';
+        });
+}
+
+function renderRoster(students) {
+    const rosterBody = document.getElementById('roster-body');
+    const markAllContainer = document.getElementById('mark-all-container');
+    studentStatusMap = {};
+
+    if (students.length === 0) {
+        rosterBody.innerHTML = '<div class="py-8 text-center text-on-surface-variant">No students enrolled in this course.</div>';
+        markAllContainer.innerHTML = '';
+        return;
     }
+
+    markAllContainer.innerHTML = `<button onclick="markAll('present')" class="px-3 py-1 bg-surface-container-lowest border border-outline-variant rounded-full text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container-high transition-colors">Mark All Present</button>`;
+
+    let html = `<table class="w-full text-left border-collapse">
+        <thead class="bg-surface-container-low"><tr>
+            <th class="px-md py-3 font-label-sm text-label-sm text-secondary uppercase tracking-wider">Student Name</th>
+            <th class="px-md py-3 font-label-sm text-label-sm text-secondary uppercase tracking-wider">Status Selection</th>
+        </tr></thead>
+        <tbody class="divide-y divide-outline-variant">`;
+
+    students.forEach(stu => {
+        const status = stu.attendance_status || '';
+        studentStatusMap[stu.student_id] = status;
+
+        const pCls = status === 'present' ? 'bg-primary text-on-primary' : 'text-secondary hover:text-on-surface';
+        const aCls = status === 'absent'  ? 'bg-error text-white'       : 'text-secondary hover:text-on-surface';
+        const eCls = status === 'excused' ? 'bg-secondary text-on-secondary' : 'text-secondary hover:text-on-surface';
+
+        html += `<tr class="hover:bg-surface-container-low transition-colors" data-student-id="${stu.student_id}">
+            <td class="px-md py-4">
+                <span class="font-semibold text-on-surface font-body-md">${escapeHtml(stu.student_name)}</span>
+                <p class="text-xs text-outline">${escapeHtml(stu.student_email)}</p>
+            </td>
+            <td class="px-md py-4">
+                <div class="flex bg-surface-container-low p-1 rounded-lg w-fit attendance-btn-group">
+                    <button onclick="setStatus(this,'present')" class="px-3 py-1.5 rounded-md text-xs font-semibold ${pCls} btn-present">Present</button>
+                    <button onclick="setStatus(this,'absent')"  class="px-3 py-1.5 rounded-md text-xs font-semibold ${aCls} btn-absent">Absent</button>
+                    <button onclick="setStatus(this,'excused')" class="px-3 py-1.5 rounded-md text-xs font-semibold ${eCls} btn-excused">Excused</button>
+                </div>
+            </td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>
+        <div class="p-md bg-surface-container-low border-t border-outline-variant flex justify-end">
+            <button onclick="saveAttendance()" class="bg-primary text-on-primary px-xl py-3 rounded-lg font-label-md text-label-md font-semibold hover:opacity-95 active:opacity-90 shadow-sm transition-all">
+                Save Attendance
+            </button>
+        </div>`;
+
+    rosterBody.innerHTML = html;
+}
+
+function updateSessionDetails(scheduleId, studentCount) {
+    const container = document.getElementById('session-details-body');
+    if (!currentScheduleData) {
+        fetchScheduleDetail(scheduleId, studentCount);
+        return;
+    }
+    renderDetails(studentCount);
+}
+
+function fetchScheduleDetail(scheduleId, studentCount) {
+    const courseId = document.getElementById('course-select').value;
+    fetch(BASE_URL + `/instructor/attendance.php?action=schedules&course_id=${courseId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                currentScheduleData = data.data.find(s => s.id === scheduleId) || null;
+            }
+            renderDetails(studentCount);
+        })
+        .catch(() => renderDetails(studentCount));
+}
+
+function renderDetails(studentCount) {
+    const container = document.getElementById('session-details-body');
+    const dateStr = currentDate ? new Date(currentDate + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : 'N/A';
+    const timeStr = currentScheduleData ? `${formatTime(currentScheduleData.start_time)} - ${formatTime(currentScheduleData.end_time)}` : 'N/A';
+    const location = currentScheduleData ? escapeHtml(currentScheduleData.location_detail) : 'N/A';
+
+    container.innerHTML = `
+        <div class="flex justify-between py-2 border-b border-outline-variant">
+            <span class="text-secondary font-body-md">Session Date</span>
+            <span class="font-semibold text-on-surface font-body-md">${dateStr}</span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-outline-variant">
+            <span class="text-secondary font-body-md">Session Time</span>
+            <span class="font-semibold text-on-surface font-body-md">${timeStr}</span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-outline-variant">
+            <span class="text-secondary font-body-md">Location</span>
+            <span class="font-semibold text-on-surface font-body-md">${location}</span>
+        </div>
+        <div class="flex justify-between py-2">
+            <span class="text-secondary font-body-md">Enrolled Students</span>
+            <span class="font-semibold text-primary font-body-md">${studentCount} Students</span>
+        </div>`;
+}
+
+function updateSessionDetailsEmpty() {
+    document.getElementById('session-details-body').innerHTML = '<p class="text-secondary font-body-md">Select a course and schedule to view details.</p>';
+}
+
+function updateRosterEmpty(msg) {
+    document.getElementById('roster-body').innerHTML = `<div class="py-8 text-center text-on-surface-variant">${msg}</div>`;
+}
+
+function setStatus(btn, status) {
+    const row = btn.closest('tr');
+    const studentId = row.getAttribute('data-student-id');
+    studentStatusMap[studentId] = status;
+
+    row.querySelectorAll('.attendance-btn-group button').forEach(b => {
+        b.className = 'px-3 py-1.5 rounded-md text-xs font-semibold text-secondary hover:text-on-surface';
+    });
+
+    if (status === 'present')  btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-on-primary btn-present';
+    if (status === 'absent')   btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold bg-error text-white btn-absent';
+    if (status === 'excused')  btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold bg-secondary text-on-secondary btn-excused';
+}
+
+function markAll(status) {
+    document.querySelectorAll('#roster-body tr[data-student-id]').forEach(row => {
+        const studentId = row.getAttribute('data-student-id');
+        studentStatusMap[studentId] = status;
+        const btn = row.querySelector(`.btn-${status}`);
+        if (btn) setStatus(btn, status);
+    });
+}
+
+function saveAttendance() {
+    if (!currentScheduleId) {
+        showToast('Please select a schedule first.', 'error');
+        return;
+    }
+
+    const attendanceList = [];
+    for (const [studentId, status] of Object.entries(studentStatusMap)) {
+        if (status) {
+            attendanceList.push({ student_id: parseInt(studentId), status: status });
+        }
+    }
+
+    if (attendanceList.length === 0) {
+        showToast('Please mark status for at least one student.', 'error');
+        return;
+    }
+
+    const saveBtn = document.querySelector('#roster-body button[onclick="saveAttendance()"]');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+    }
+
+    fetch(BASE_URL + '/instructor/attendance.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN },
+        body: JSON.stringify({ schedule_id: currentScheduleId, date: currentDate, attendance: attendanceList })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Attendance recorded successfully!', 'success');
+            loadStudents(currentScheduleId, currentDate);
+        } else {
+            showToast(data.error || 'Failed to record attendance.', 'error');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        showToast('Network error saving attendance.', 'error');
+    })
+    .finally(() => {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Attendance';
+        }
+    });
+}
+
+function formatTime(timeStr) {
+    if (!timeStr) return '';
+    const [h, m] = timeStr.split(':');
+    const hr = parseInt(h);
+    const ampm = hr >= 12 ? 'PM' : 'AM';
+    const h12 = hr % 12 || 12;
+    return `${h12}:${m} ${ampm}`;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    const bg = type === 'success' ? 'bg-primary text-on-primary' : type === 'error' ? 'bg-error text-white' : 'bg-surface-container-high text-on-surface';
+    const icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+
+    toast.className = `${bg} px-md py-sm rounded-lg shadow-lg flex items-center gap-sm toast-enter`;
+    toast.innerHTML = `<span class="material-symbols-outlined text-[20px]" aria-hidden="true">${icon}</span><span class="font-body-md">${escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.remove('toast-enter');
+        toast.classList.add('toast-exit');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
 </script>
 </body>
 </html>

@@ -66,7 +66,7 @@ $shortId = $valid ? strtoupper(substr($hash, 0, 16)) : '';
     <div class="w-full max-w-lg">
         <!-- Logo / Brand -->
         <div class="text-center mb-8">
-            <a href="/43_Public_Homepage/index.php" class="inline-flex items-center gap-sm">
+            <a href="<?= BASE_URL ?>/43_Public_Homepage/index.php" class="inline-flex items-center gap-sm">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white" style="background:#5b4800">
                     <span class="material-symbols-outlined icon-fill text-xl">public</span>
                 </div>
@@ -136,14 +136,14 @@ $shortId = $valid ? strtoupper(substr($hash, 0, 16)) : '';
                 <div class="p-lg">
                     <p class="text-body-md text-on-surface-variant"><?= htmlspecialchars($error) ?></p>
                     <div class="mt-md">
-                        <a href="/43_Public_Homepage/index.php" class="text-primary font-semibold hover:underline text-body-md">Return to Homepage</a>
+                        <a href="<?= BASE_URL ?>/43_Public_Homepage/index.php" class="text-primary font-semibold hover:underline text-body-md">Return to Homepage</a>
                     </div>
                 </div>
             </div>
         <?php endif; ?>
 
         <p class="text-center text-label-sm text-on-surface-variant mt-md">
-            <a href="/43_Public_Homepage/index.php" class="hover:text-primary transition-colors">Lyra Academy Music School</a>
+            <a href="<?= BASE_URL ?>/43_Public_Homepage/index.php" class="hover:text-primary transition-colors">Lyra Academy Music School</a>
         </p>
     </div>
 

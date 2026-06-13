@@ -84,12 +84,28 @@ switch ($method) {
             // Handle file upload if present
             $filePath = null;
             $fileName = null;
-            if (isset($_FILES['assignment_file']) && $_FILES['assignment_file']['error'] === UPLOAD_ERR_OK) {
+            if (isset($_FILES['assignment_file']) && $_FILES['assignment_file']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $file = $_FILES['assignment_file'];
+
+                $uploadErrors = [
+                    UPLOAD_ERR_INI_SIZE   => 'File exceeds server upload limit.',
+                    UPLOAD_ERR_FORM_SIZE  => 'File exceeds form upload limit.',
+                    UPLOAD_ERR_PARTIAL    => 'File was only partially uploaded.',
+                    UPLOAD_ERR_NO_TMP_DIR => 'Server missing temporary upload folder.',
+                    UPLOAD_ERR_CANT_WRITE => 'Server failed to write file to disk.',
+                    UPLOAD_ERR_EXTENSION  => 'Upload blocked by server extension.',
+                ];
+                if ($file['error'] !== UPLOAD_ERR_OK) {
+                    $errMsg = $uploadErrors[$file['error']] ?? 'Unknown upload error (code ' . $file['error'] . ').';
+                    http_response_code(400);
+                    echo json_encode(['error' => $errMsg]);
+                    exit;
+                }
+
                 $maxSize = 20 * 1024 * 1024; // 20MB
                 $allowedExtensions = ['pdf', 'mp3', 'wav', 'mp4', 'doc', 'docx'];
                 $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-                
+
                 if ($file['size'] > $maxSize) {
                     http_response_code(400);
                     echo json_encode(['error' => 'File size exceeds 20MB limit.']);
@@ -100,20 +116,24 @@ switch ($method) {
                     echo json_encode(['error' => 'Invalid file type. Allowed: PDF, MP3, WAV, MP4, DOC, DOCX.']);
                     exit;
                 }
-                
+
                 $uploadDir = __DIR__ . '/../uploads/assignments/';
-                if (!file_exists($uploadDir)) {
-                    mkdir($uploadDir, 0755, true);
+                if (!is_dir($uploadDir)) {
+                    if (!mkdir($uploadDir, 0777, true)) {
+                        http_response_code(500);
+                        echo json_encode(['error' => 'Failed to create upload directory.']);
+                        exit;
+                    }
                 }
                 $secureName = uniqid('asn_', true) . '.' . $ext;
                 $destPath = $uploadDir . $secureName;
-                
+
                 if (move_uploaded_file($file['tmp_name'], $destPath)) {
                     $filePath = '/uploads/assignments/' . $secureName;
                     $fileName = basename($file['name']);
                 } else {
                     http_response_code(500);
-                    echo json_encode(['error' => 'Failed to save uploaded file.']);
+                    echo json_encode(['error' => 'Failed to save uploaded file. Check server permissions.']);
                     exit;
                 }
             }

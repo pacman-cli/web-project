@@ -115,10 +115,10 @@ try {
             <div class="flex items-center justify-between">
                 <h2 class="font-h2 text-h2 text-on-surface">Weekly Sessions</h2>
                 <div class="flex gap-md">
-                    <a href="/35_Student_Attendance/index.php<?= $selectedCourseId > 0 ? '?course_id=' . intval($selectedCourseId) : '' ?>" class="text-primary font-label-md text-label-md hover:underline">
+                    <a href="<?= BASE_URL ?>/35_Student_Attendance/index.php<?= $selectedCourseId > 0 ? '?course_id=' . intval($selectedCourseId) : '' ?>" class="text-primary font-label-md text-label-md hover:underline">
                         Mark Attendance
                     </a>
-                    <a href="/16_Lesson_Materials/index.php<?= $selectedCourseId > 0 ? '?course_id=' . intval($selectedCourseId) : '' ?>" class="text-primary font-label-md text-label-md hover:underline">
+                    <a href="<?= BASE_URL ?>/16_Lesson_Materials/index.php<?= $selectedCourseId > 0 ? '?course_id=' . intval($selectedCourseId) : '' ?>" class="text-primary font-label-md text-label-md hover:underline">
                         Open Materials
                     </a>
                 </div>

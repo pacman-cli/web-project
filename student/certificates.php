@@ -129,7 +129,7 @@ try {
 
     $certDir = __DIR__ . '/../uploads/certificates/';
     if (!file_exists($certDir)) {
-        mkdir($certDir, 0755, true);
+        mkdir($certDir, 0777, true);
     }
 
     // Fetch names for the PDF

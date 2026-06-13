@@ -66,7 +66,7 @@ requireRole('instructor');
             <section class="lg:col-span-2">
                 <div class="flex items-center justify-between mb-md">
                     <h2 class="section-title mb-0">Your Assigned Courses</h2>
-                    <a href="/19_My_Courses/index.php" class="text-label-md font-semibold hover:underline" style="color:#1a6b3c">View All →</a>
+                    <a href="<?= BASE_URL ?>/19_My_Courses/index.php" class="text-label-md font-semibold hover:underline" style="color:#1a6b3c">View All →</a>
                 </div>
                 <div id="instructor-courses-container" class="grid grid-cols-1 md:grid-cols-2 gap-md" aria-live="polite">
                     <div class="col-span-2 text-center py-lg text-outline">
@@ -84,19 +84,19 @@ requireRole('instructor');
                         <h2 class="section-title mb-0">Quick Actions</h2>
                     </div>
                     <div class="px-md py-md space-y-sm">
-                        <a href="/16_Lesson_Materials/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(26,107,60,.1);color:#1a6b3c">
+                        <a href="<?= BASE_URL ?>/16_Lesson_Materials/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(26,107,60,.1);color:#1a6b3c">
                             <span class="material-symbols-outlined" aria-hidden="true">upload_file</span> Upload Material
                         </a>
-                        <a href="/18_Class_Schedules/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(26,107,60,.1);color:#1a6b3c">
+                        <a href="<?= BASE_URL ?>/18_Class_Schedules/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(26,107,60,.1);color:#1a6b3c">
                             <span class="material-symbols-outlined" aria-hidden="true">add_circle</span> Add Schedule
                         </a>
-                        <a href="/22_Attendance/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(26,107,60,.1);color:#1a6b3c">
+                        <a href="<?= BASE_URL ?>/22_Attendance/index.php" class="btn btn-secondary w-full justify-start gap-sm" style="background:rgba(26,107,60,.1);color:#1a6b3c">
                             <span class="material-symbols-outlined" aria-hidden="true">how_to_reg</span> Mark Attendance
                         </a>
-                        <a href="/23_Assignments/index.php" class="btn btn-ghost w-full justify-start gap-sm">
+                        <a href="<?= BASE_URL ?>/23_Assignments/index.php" class="btn btn-ghost w-full justify-start gap-sm">
                             <span class="material-symbols-outlined" aria-hidden="true">assignment_add</span> Create Assignment
                         </a>
-                        <a href="/25_Recording_Reviews/index.php" class="btn btn-ghost w-full justify-start gap-sm">
+                        <a href="<?= BASE_URL ?>/25_Recording_Reviews/index.php" class="btn btn-ghost w-full justify-start gap-sm">
                             <span class="material-symbols-outlined" aria-hidden="true">rate_review</span> Review Submissions
                         </a>
                     </div>
@@ -136,7 +136,7 @@ function escapeHTML(str) {
 }
 document.addEventListener("DOMContentLoaded", () => {
     // Fetch assigned courses
-    fetch("/instructor/courses.php?action=list_courses")
+    fetch(BASE_URL + "/instructor/courses.php?action=list_courses")
         .then(r => r.json())
         .then(data => {
             if (!data.success) return;
@@ -169,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
                 container.appendChild(card);
 
-                fetch(`/instructor/courses.php?action=list_students&course_id=${course.id}`)
+                fetch(BASE_URL + `/instructor/courses.php?action=list_students&course_id=${course.id}`)
                     .then(r => r.json())
                     .then(sd => {
                         if (sd.success) {
@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(err => console.error("Courses error:", err));
 
     // Fetch schedules count
-    fetch("/instructor/schedules.php")
+    fetch(BASE_URL + "/instructor/schedules.php")
         .then(r => r.json())
         .then(data => {
             if (data.success) document.getElementById("active-schedules-val").textContent = data.data.length;

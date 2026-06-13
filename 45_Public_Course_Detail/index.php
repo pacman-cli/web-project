@@ -10,7 +10,7 @@ require_once __DIR__ . '/../config/csrf.php';
 
 $courseId = intval($_GET['course_id'] ?? 0);
 if ($courseId <= 0) {
-    header('Location: /42_Public_Course_Catalog/index.php');
+    header('Location: ' . BASE_URL . '/42_Public_Course_Catalog/index.php');
     exit;
 }
 
@@ -94,7 +94,7 @@ try {
             <div class="flex flex-col md:flex-row gap-xl items-center">
                 <div class="flex-1 space-y-md">
                     <nav class="flex gap-xs text-secondary font-label-md text-label-md">
-                        <a href="/42_Public_Course_Catalog/index.php" class="hover:underline">Catalog</a>
+                        <a href="<?= BASE_URL ?>/42_Public_Course_Catalog/index.php" class="hover:underline">Catalog</a>
                         <span>/</span>
                         <span><?= htmlspecialchars($course['instrument_name'] ?? 'General') ?></span>
                     </nav>
@@ -207,7 +207,7 @@ try {
                     <p class="font-body-md text-body-md mb-lg opacity-90">Enrollment is limited. Apply today to secure instructor schedule slots.</p>
                     
                     <?php if (!$isLoggedIn): ?>
-                        <a href="/auth/login.php" class="w-full bg-white text-primary text-center font-h3 py-sm rounded-lg hover:bg-surface-container-low active:scale-95 transition-all block font-semibold">Login to Enroll</a>
+                        <a href="<?= BASE_URL ?>/auth/login.php" class="w-full bg-white text-primary text-center font-h3 py-sm rounded-lg hover:bg-surface-container-low active:scale-95 transition-all block font-semibold">Login to Enroll</a>
                     <?php elseif ($userRole === 'student'): ?>
                         <?php if ($enrollmentStatus === 'approved'): ?>
                             <span class="w-full bg-green-600 text-white text-center font-h3 py-sm rounded-lg block font-semibold uppercase">Already Enrolled</span>
@@ -246,7 +246,7 @@ try {
     function requestEnrollment(courseId) {
         if (!confirm('Would you like to request enrollment in this course?')) return;
 
-        fetch('/student/enroll.php', {
+        fetch(BASE_URL + '/student/enroll.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

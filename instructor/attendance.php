@@ -15,49 +15,83 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        $scheduleId = intval($_GET['schedule_id'] ?? 0);
-        $date = trim($_GET['date'] ?? date('Y-m-d'));
+        $action = $_GET['action'] ?? '';
 
-        if ($scheduleId <= 0 || empty($date)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Valid Schedule ID and date are required.']);
-            exit;
-        }
-
-        try {
-            // Verify schedule ownership
-            $verifyStmt = $pdo->prepare("SELECT course_id FROM schedules WHERE id = :id AND instructor_id = :instructor_id");
-            $verifyStmt->execute(['id' => $scheduleId, 'instructor_id' => $instructorId]);
-            $schedule = $verifyStmt->fetch();
-            if (!$schedule) {
-                http_response_code(403);
-                echo json_encode(['error' => 'Access denied: You do not own this lesson schedule.']);
+        if ($action === 'schedules') {
+            $courseId = intval($_GET['course_id'] ?? 0);
+            if ($courseId <= 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Valid Course ID is required.']);
                 exit;
             }
 
-            // Fetch students enrolled and their attendance status for this date
-            $stmt = $pdo->prepare("
-                SELECT u.id as student_id, u.name as student_name, u.email as student_email,
-                       att.status as attendance_status, att.marked_at
-                FROM users u
-                JOIN students s ON u.id = s.user_id
-                JOIN enrollments e ON u.id = e.student_id AND e.course_id = :course_id
-                LEFT JOIN attendance att ON u.id = att.student_id AND att.schedule_id = :schedule_id AND att.date = :date
-                WHERE e.status = 'approved'
-                ORDER BY u.name ASC
-            ");
-            $stmt->execute([
-                'course_id' => $schedule['course_id'],
-                'schedule_id' => $scheduleId,
-                'date' => $date
-            ]);
-            $records = $stmt->fetchAll();
+            try {
+                $verifyStmt = $pdo->prepare("SELECT 1 FROM instructor_assignments WHERE instructor_id = :iid AND course_id = :cid");
+                $verifyStmt->execute(['iid' => $instructorId, 'cid' => $courseId]);
+                if (!$verifyStmt->fetch()) {
+                    http_response_code(403);
+                    echo json_encode(['error' => 'Access denied: Not assigned to this course.']);
+                    exit;
+                }
 
-            echo json_encode(['success' => true, 'data' => $records]);
-        } catch (Exception $e) {
-            error_log('Attendance fetch error: ' . $e->getMessage());
-            http_response_code(500);
-            echo json_encode(['error' => 'Database query failed.']);
+                $stmt = $pdo->prepare("
+                    SELECT id, start_time, end_time, day_of_week, location_detail
+                    FROM schedules
+                    WHERE course_id = :course_id AND instructor_id = :instructor_id
+                    ORDER BY FIELD(day_of_week, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'), start_time ASC
+                ");
+                $stmt->execute(['course_id' => $courseId, 'instructor_id' => $instructorId]);
+                $schedules = $stmt->fetchAll();
+
+                echo json_encode(['success' => true, 'data' => $schedules]);
+            } catch (Exception $e) {
+                error_log('Schedules fetch error: ' . $e->getMessage());
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to fetch schedules.']);
+            }
+        } else {
+            $scheduleId = intval($_GET['schedule_id'] ?? 0);
+            $date = trim($_GET['date'] ?? date('Y-m-d'));
+
+            if ($scheduleId <= 0 || empty($date)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Valid Schedule ID and date are required.']);
+                exit;
+            }
+
+            try {
+                $verifyStmt = $pdo->prepare("SELECT course_id FROM schedules WHERE id = :id AND instructor_id = :instructor_id");
+                $verifyStmt->execute(['id' => $scheduleId, 'instructor_id' => $instructorId]);
+                $schedule = $verifyStmt->fetch();
+                if (!$schedule) {
+                    http_response_code(403);
+                    echo json_encode(['error' => 'Access denied: You do not own this lesson schedule.']);
+                    exit;
+                }
+
+                $stmt = $pdo->prepare("
+                    SELECT u.id as student_id, u.name as student_name, u.email as student_email,
+                           att.status as attendance_status, att.marked_at
+                    FROM users u
+                    JOIN students s ON u.id = s.user_id
+                    JOIN enrollments e ON u.id = e.student_id AND e.course_id = :course_id
+                    LEFT JOIN attendance att ON u.id = att.student_id AND att.schedule_id = :schedule_id AND att.date = :date
+                    WHERE e.status = 'approved'
+                    ORDER BY u.name ASC
+                ");
+                $stmt->execute([
+                    'course_id' => $schedule['course_id'],
+                    'schedule_id' => $scheduleId,
+                    'date' => $date
+                ]);
+                $records = $stmt->fetchAll();
+
+                echo json_encode(['success' => true, 'data' => $records]);
+            } catch (Exception $e) {
+                error_log('Attendance fetch error: ' . $e->getMessage());
+                http_response_code(500);
+                echo json_encode(['error' => 'Database query failed.']);
+            }
         }
         break;
 

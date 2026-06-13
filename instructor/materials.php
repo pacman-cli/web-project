@@ -121,7 +121,7 @@ switch ($method) {
         // 4. Secure naming and directory setup
         $uploadDir = __DIR__ . '/../uploads/materials/';
         if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0755, true); // Create directory if not exists
+            mkdir($uploadDir, 0777, true); // Create directory if not exists
         }
 
         $secureName = uniqid('mat_', true) . '.' . $ext;

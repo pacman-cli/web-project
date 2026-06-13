@@ -200,7 +200,7 @@ try {
             rejection_reason: rejectionReason
         };
 
-        fetch('/admin/enrollments.php', {
+        fetch(BASE_URL + '/admin/enrollments.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
             body: JSON.stringify(data)

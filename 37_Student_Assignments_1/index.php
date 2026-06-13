@@ -209,7 +209,7 @@ try {
         const errorDiv = document.getElementById('submission-error');
         errorDiv.classList.add('hidden');
 
-        fetch('/student/submissions.php', {
+        fetch(BASE_URL + '/student/submissions.php', {
             method: 'POST',
             headers: {
                 'X-CSRF-Token': '<?= csrf_token() ?>'

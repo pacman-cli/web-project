@@ -12,6 +12,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/design-system.php';
 require_once __DIR__ . '/../config/csrf.php';
+require_once __DIR__ . '/../config/app.php';
 
 $error = '';
 $success = '';
@@ -36,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (strlen($password) >= 6) {
                 try {
                     $pdo = require_once __DIR__ . '/../config/db.php';
-                    
+
                     // Check if email already exists
                     $checkStmt = $pdo->prepare("SELECT id FROM users WHERE email = :email");
                     $checkStmt->execute(['email' => $email]);
@@ -45,12 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         // Start transaction to insert into both users and students
                         $pdo->beginTransaction();
-                        
+
                         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-                        
+
                         // 1. Insert into users
                         $userStmt = $pdo->prepare("
-                            INSERT INTO users (name, email, password_hash, role) 
+                            INSERT INTO users (name, email, password_hash, role)
                             VALUES (:name, :email, :password_hash, 'student')
                         ");
                         $userStmt->execute([
@@ -59,10 +60,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'password_hash' => $passwordHash
                         ]);
                         $userId = $pdo->lastInsertId();
-                        
+
                         // 2. Insert into students
                         $studentStmt = $pdo->prepare("
-                            INSERT INTO students (user_id, date_of_birth, experience_level, enrollment_date) 
+                            INSERT INTO students (user_id, date_of_birth, experience_level, enrollment_date)
                             VALUES (:user_id, :dob, :level, :enroll_date)
                         ");
                         $studentStmt->execute([
@@ -71,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'level' => $level,
                             'enroll_date' => date('Y-m-d')
                         ]);
-                        
+
                         $pdo->commit();
                         register_rate_reset();
                         $success = 'Registration successful! You can now log in.';
@@ -94,25 +95,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     }
 }
+
+// Determine which field has the error for inline display
+$errorField = '';
+if (!empty($error)) {
+    $errLower = strtolower($error);
+    if (strpos($errLower, 'email') !== false) $errorField = 'email';
+    elseif (strpos($errLower, 'password') !== false) $errorField = 'password';
+    elseif (strpos($errLower, 'name') !== false || strpos($errLower, 'all required') !== false) $errorField = 'name';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <?php lms_head('Register', 'guest'); ?>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4" style="background: #0b1120;">
+    <a href="#register-form" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-white text-black px-4 py-2 rounded-lg z-50 font-semibold">Skip to registration form</a>
+
     <div class="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl relative overflow-hidden my-8">
         <!-- Background decorative blur elements -->
-        <div class="absolute -top-10 -left-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
+        <div class="absolute -top-10 -left-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl" aria-hidden="true"></div>
+        <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl" aria-hidden="true"></div>
 
         <div class="text-center mb-8 relative z-10">
-            <h1 class="text-3xl font-bold text-white tracking-tight">Student Signup</h1>
+            <h1 class="text-3xl font-bold text-white tracking-tight text-balance">Student Signup</h1>
             <p class="text-gray-400 text-sm mt-2">Join the Lyra Academy Music LMS</p>
         </div>
 
         <?php if (!empty($error)): ?>
-            <div class="mb-6 bg-red-500/10 border border-red-500/30 text-red-200 text-sm p-4 rounded-xl flex items-center gap-2">
+            <div id="reg-error" role="alert" aria-live="assertive" class="mb-6 bg-red-500/10 border border-red-500/30 text-red-200 text-sm p-4 rounded-xl flex items-center gap-2">
                 <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                 </svg>
@@ -121,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <?php if (!empty($success)): ?>
-            <div class="mb-6 bg-green-500/10 border border-green-500/30 text-green-200 text-sm p-4 rounded-xl flex items-center gap-2">
+            <div role="status" aria-live="polite" class="mb-6 bg-green-500/10 border border-green-500/30 text-green-200 text-sm p-4 rounded-xl flex items-center gap-2">
                 <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                 </svg>
@@ -129,40 +141,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php endif; ?>
 
-        <form action="" method="POST" class="space-y-5 relative z-10">
+        <form id="register-form" action="" method="POST" class="space-y-5 relative z-10" novalidate>
             <?= csrf_field() ?>
             <div>
-                <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Full Name *</label>
+                <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
                 <input type="text" id="name" name="name" autocomplete="name" required
-                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="John Doe">
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
+                    placeholder="Your full name…">
+                <?php if ($errorField === 'name'): ?>
+                    <p class="mt-1 text-xs text-red-400" role="alert"><?= htmlspecialchars($error) ?></p>
+                <?php endif; ?>
             </div>
 
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email Address *</label>
+                <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
                 <input type="email" id="email" name="email" autocomplete="email" required
-                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="john@example.com">
+                    spellcheck="false"
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
+                    placeholder="you@example.com…">
+                <?php if ($errorField === 'email'): ?>
+                    <p class="mt-1 text-xs text-red-400" role="alert"><?= htmlspecialchars($error) ?></p>
+                <?php endif; ?>
             </div>
 
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Password *</label>
+                <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
                 <input type="password" id="password" name="password" autocomplete="new-password" required
-                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Min 6 characters">
+                    spellcheck="false"
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
+                    placeholder="Min 6 characters…">
+                <?php if ($errorField === 'password'): ?>
+                    <p class="mt-1 text-xs text-red-400" role="alert"><?= htmlspecialchars($error) ?></p>
+                <?php endif; ?>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label for="dob" class="block text-sm font-medium text-gray-300 mb-2">Date of Birth</label>
                     <input type="date" id="dob" name="dob" autocomplete="bday"
-                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors duration-200">
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors">
                 </div>
 
                 <div>
                     <label for="level" class="block text-sm font-medium text-gray-300 mb-2">Experience Level</label>
                     <select id="level" name="level"
-                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors duration-200">
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%239ca3af%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.23%207.21a.75.75%200%20011.06.02L10%2011.168l3.71-3.938a.75.75%200%20111.08%201.04l-4.25%204.5a.75.75%200%2001-1.08%200l-4.25-4.5a.75.75%200%2001.02-1.06z%22%20clip-rule%3D%22evenodd%22%20%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_0.5rem_center] bg-no-repeat appearance-none pr-8">
                         <option value="beginner" class="bg-slate-800 text-white">Beginner</option>
                         <option value="intermediate" class="bg-slate-800 text-white">Intermediate</option>
                         <option value="advanced" class="bg-slate-800 text-white">Advanced</option>
@@ -170,18 +193,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <button type="submit"
-                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-300 shadow-lg shadow-blue-500/20 active:scale-[0.98] mt-2">
-                Register Account
+            <button type="submit" id="reg-submit"
+                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-blue-500/20 active:scale-[0.98] mt-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent">
+                <span id="reg-btn-text">Register Account</span>
+                <span id="reg-btn-spinner" class="hidden">
+                    <svg class="animate-spin inline-block h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    Registering…
+                </span>
             </button>
         </form>
 
         <div class="mt-8 text-center relative z-10">
             <p class="text-sm text-gray-400">
-                Already registered? 
-                <a href="/auth/login.php" class="text-blue-400 hover:text-blue-300 font-medium transition-colors">Sign in</a>
+                Already registered?
+                <a href="<?= BASE_URL ?>/auth/login.php" class="text-blue-400 hover:text-blue-300 font-medium transition-colors">Sign in</a>
             </p>
         </div>
     </div>
+
+    <script>
+    document.getElementById('register-form').addEventListener('submit', function() {
+        var btn = document.getElementById('reg-submit');
+        btn.disabled = true;
+        btn.classList.add('opacity-60', 'cursor-not-allowed');
+        document.getElementById('reg-btn-text').classList.add('hidden');
+        document.getElementById('reg-btn-spinner').classList.remove('hidden');
+    });
+    </script>
 </body>
 </html>

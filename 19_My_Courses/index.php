@@ -79,7 +79,7 @@ try {
                                     <span class="font-label-md text-label-md"><?= intval($c['student_count']) ?> Students</span>
                                 </div>
                             </div>
-                            <a href="/27_Course_Students/index.php?course_id=<?= $c['id'] ?>" class="mt-auto w-full py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all flex justify-center items-center group/btn">
+                            <a href="<?= BASE_URL ?>/27_Course_Students/index.php?course_id=<?= $c['id'] ?>" class="mt-auto w-full py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all flex justify-center items-center group/btn">
                                 Open Course Students
                                 <span class="material-symbols-outlined ml-2 text-[18px] group-hover/btn:translate-x-1 transition-transform" aria-hidden="true">arrow_forward</span>
                             </a>

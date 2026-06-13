@@ -181,7 +181,7 @@ try {
             description: document.getElementById('form-description').value
         };
 
-        fetch('/admin/instruments.php', {
+        fetch(BASE_URL + '/admin/instruments.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
             body: JSON.stringify(data)
@@ -203,7 +203,7 @@ try {
 
     function deleteInstrument(id) {
         if (confirm('Are you sure you want to delete this category? All related courses will lose their category tag.')) {
-            fetch('/admin/instruments.php', {
+            fetch(BASE_URL + '/admin/instruments.php', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
                 body: JSON.stringify({ id: id })

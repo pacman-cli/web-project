@@ -153,7 +153,7 @@ try {
                                         <p class="font-label-sm text-on-surface-variant">Grade Evaluated</p>
                                         <p class="font-label-md font-bold text-primary">Score: <?= intval($rec['points_earned']) ?> pts</p>
                                     </div>
-                                    <a href="/37_Student_Assignments_1/index.php?course_id=<?= intval($rec['course_id']) ?>&assignment_id=<?= intval($rec['assignment_id']) ?>" class="text-primary font-label-md hover:underline font-bold">Feedback</a>
+                                    <a href="<?= BASE_URL ?>/37_Student_Assignments_1/index.php?course_id=<?= intval($rec['course_id']) ?>&assignment_id=<?= intval($rec['assignment_id']) ?>" class="text-primary font-label-md hover:underline font-bold">Feedback</a>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -218,7 +218,7 @@ try {
         if (dest === 'personal') {
             // Personal Practice -> call api/upload.php
             formData.append('file', file);
-            fetch('/api/upload.php', {
+            fetch(BASE_URL + '/api/upload.php', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-Token': '<?= csrf_token() ?>'
@@ -245,7 +245,7 @@ try {
             formData.append('assignment_id', dest);
             formData.append('submission_text', document.getElementById('recording-title').value);
             formData.append('submission_file', file);
-            fetch('/student/submissions.php', {
+            fetch(BASE_URL + '/student/submissions.php', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-Token': '<?= csrf_token() ?>'

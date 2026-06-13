@@ -55,11 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Generate Certificate
                 $certHash = cert_generate_hash($studentId, $courseId);
-                $filePath = "/uploads/certificates/cert_" . $certHash . ".pdf";
+                $filePath = BASE_URL . "/uploads/certificates/cert_" . $certHash . ".pdf";
                 
                 $certDir = __DIR__ . '/../uploads/certificates/';
                 if (!file_exists($certDir)) {
-                    mkdir($certDir, 0755, true);
+                    mkdir($certDir, 0777, true);
                 }
                 // Get student and course names
                 $nameStmt = $pdo->prepare("SELECT name FROM users WHERE id = :sid");
@@ -124,11 +124,11 @@ error_log('Certificate generation error: ' . $e->getMessage());
                     
                     // Generate Certificate
                     $certHash = cert_generate_hash($sId, $cId);
-                    $filePath = "/uploads/certificates/cert_" . $certHash . ".pdf";
+                    $filePath = BASE_URL . "/uploads/certificates/cert_" . $certHash . ".pdf";
                     
                     $certDir = __DIR__ . '/../uploads/certificates/';
                     if (!file_exists($certDir)) {
-                        mkdir($certDir, 0755, true);
+                        mkdir($certDir, 0777, true);
                     }
                     // Get student and course names
                     $nameStmt = $pdo->prepare("SELECT name FROM users WHERE id = :sid");

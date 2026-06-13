@@ -69,14 +69,21 @@ try {
             sendJSONError('Unauthorized: You can only message instructors or students in this course.', 403);
         }
     } elseif ($senderRole === 'instructor') {
-        // Instructor can only message students enrolled (approved) in this course
-        $recvCheck = $pdo->prepare("
+        // Instructor can message students enrolled (approved) in this course OR other assigned instructors
+        $recvStudentCheck = $pdo->prepare("
             SELECT 1 FROM enrollments 
             WHERE student_id = :rid AND course_id = :cid AND status = 'approved'
         ");
-        $recvCheck->execute(['rid' => $receiverId, 'cid' => $courseId]);
-        if (!$recvCheck->fetch()) {
-            sendJSONError('Unauthorized: You can only message students enrolled in this course.', 403);
+        $recvStudentCheck->execute(['rid' => $receiverId, 'cid' => $courseId]);
+
+        $recvInstructorCheck = $pdo->prepare("
+            SELECT 1 FROM instructor_assignments 
+            WHERE instructor_id = :rid AND course_id = :cid
+        ");
+        $recvInstructorCheck->execute(['rid' => $receiverId, 'cid' => $courseId]);
+
+        if (!$recvStudentCheck->fetch() && !$recvInstructorCheck->fetch()) {
+            sendJSONError('Unauthorized: You can only message students or other instructors assigned to this course.', 403);
         }
     }
 

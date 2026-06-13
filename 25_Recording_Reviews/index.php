@@ -250,7 +250,7 @@ try {
         const errorDiv = document.getElementById('grading-error');
         errorDiv.classList.add('hidden');
 
-        fetch('/instructor/submissions.php', {
+        fetch(BASE_URL + '/instructor/submissions.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

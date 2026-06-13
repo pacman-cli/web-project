@@ -1,0 +1,37 @@
+# ── Apache Configuration for Lyra Academy LMS ──────────────────────────────────
+# Works in both root and subdirectory (e.g. htdocs/MusicELMS/) deployments.
+
+# Increase PHP upload limits for file attachments
+php_value upload_max_filesize 20M
+php_value post_max_size 25M
+php_value max_execution_time 60
+php_value max_input_time 60
+
+# Enable mod_rewrite for clean URL support
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # If the app is in a subdirectory, detect it automatically
+    # RewriteBase /MusicELMS/
+
+    # Prevent directory listing
+    Options -Indexes
+
+    # Block access to sensitive config files
+    <FilesMatch "\.(local\.php|local\.css)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+# ── CORS for Tailwind CDN (if needed) ─────────────────────────────────────────
+<IfModule mod_headers.c>
+    <FilesMatch "\.(ttf|woff|woff2|eot|svg|css|js)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
+
+# ── PHP Settings ──────────────────────────────────────────────────────────────
+<IfModule mod_php.c>
+    php_flag display_errors off
+    php_value error_log "${DOCUMENT_ROOT}/php_errors.log"
+</IfModule>

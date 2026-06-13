@@ -174,12 +174,12 @@ let optionCounter = 0;
 
 // ── Data ────────────────────────────────────────────────────────────────────
 function getQuizzes(courseId = 0) {
-    return fetch(`/instructor/quizzes.php${courseId ? '?course_id='+courseId : ''}`)
+    return fetch(BASE_URL + `/instructor/quizzes.php${courseId ? '?course_id='+courseId : ''}`)
         .then(r => r.json()).then(d => d.data || []);
 }
 
 function saveQuizData(data) {
-    return fetch('/instructor/quizzes.php', {
+    return fetch(BASE_URL + '/instructor/quizzes.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>'},
         body: JSON.stringify(data)
@@ -187,7 +187,7 @@ function saveQuizData(data) {
 }
 
 function deleteQuizData(id) {
-    return fetch('/instructor/quizzes.php', {
+    return fetch(BASE_URL + '/instructor/quizzes.php', {
         method: 'DELETE',
         headers: {'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>'},
         body: JSON.stringify({id})
@@ -195,12 +195,12 @@ function deleteQuizData(id) {
 }
 
 function getAttempts(quizId) {
-    return fetch(`/instructor/quiz_attempts.php?quiz_id=${quizId}`)
+    return fetch(BASE_URL + `/instructor/quiz_attempts.php?quiz_id=${quizId}`)
         .then(r => r.json()).then(d => d.data || []);
 }
 
 function gradeAnswer(answerId, pointsEarned, attemptId) {
-    return fetch('/instructor/quiz_attempts.php', {
+    return fetch(BASE_URL + '/instructor/quiz_attempts.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>'},
         body: JSON.stringify({answer_id: answerId, points_earned: pointsEarned, attempt_id: attemptId})
@@ -318,7 +318,7 @@ function loadQuizQuestions(quizId) {
         const q = quizzes.find(x => x.id == quizId);
         if (!q) return;
         // We need full question data — fetch from a detail endpoint
-        fetch(`/instructor/quizzes.php?course_id=${q.course_id}`)
+        fetch(BASE_URL + `/instructor/quizzes.php?course_id=${q.course_id}`)
             .then(r => r.json()).then(d => {
                 const fullQuiz = (d.data || []).find(x => x.id == quizId);
                 if (fullQuiz) fetchQuestionsDetail(quizId);
@@ -329,7 +329,7 @@ function loadQuizQuestions(quizId) {
 
 function fetchQuestionsDetail(quizId) {
     // Fetch quiz with questions and options from the API
-    fetch(`/instructor/quizzes.php?quiz_id=${quizId}`)
+    fetch(BASE_URL + `/instructor/quizzes.php?quiz_id=${quizId}`)
         .then(r => r.json())
         .then(res => {
             if (res.success && res.data && res.data.questions) {
@@ -506,7 +506,7 @@ function publishQuiz() {
     if (!id) { alert('Save the quiz first.'); return; }
     if (!confirm('Publish this quiz? Students will be able to see and take it.')) return;
 
-    fetch('/instructor/quizzes.php', {
+    fetch(BASE_URL + '/instructor/quizzes.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>'},
         body: JSON.stringify({action: 'publish', id})
@@ -562,7 +562,7 @@ function gradeAttempt(attemptId, studentName) {
     document.getElementById('grade-body').innerHTML = '<div class="text-center py-lg text-on-surface-variant">Loading…</div>';
     document.getElementById('grade-modal').classList.remove('hidden');
 
-    fetch(`/student/quiz_attempt.php?quiz_id=0`, {
+    fetch(BASE_URL + `/student/quiz_attempt.php?quiz_id=0`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>'},
         body: JSON.stringify({action: 'results', attempt_id: attemptId})

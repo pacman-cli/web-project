@@ -71,7 +71,7 @@ $relativeDir = "/uploads/{$userId}/{$fileType}/";
 $uploadDir = __DIR__ . '/..' . $relativeDir;
 
 if (!file_exists($uploadDir)) {
-    mkdir($uploadDir, 0755, true);
+    mkdir($uploadDir, 0777, true);
 }
 
 // 5. Generate unique stored name

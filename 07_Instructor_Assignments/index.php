@@ -182,7 +182,7 @@ try {
             course_id: document.getElementById('form-course').value
         };
 
-        fetch('/admin/assignments.php', {
+        fetch(BASE_URL + '/admin/assignments.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
             body: JSON.stringify(data)
@@ -204,7 +204,7 @@ try {
 
     function removeAssignment(instructorId, courseId) {
         if (confirm('Are you sure you want to remove this instructor assignment?')) {
-            fetch('/admin/assignments.php', {
+            fetch(BASE_URL + '/admin/assignments.php', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
                 body: JSON.stringify({ instructor_id: instructorId, course_id: courseId })

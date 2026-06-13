@@ -113,7 +113,7 @@ try {
 </template>
 
 <script>
-const API = '/student/quiz_attempt.php';
+const API = BASE_URL + '/student/quiz_attempt.php';
 let courseId = <?= json_encode($courseId) ?>;
 let quizzes = [];
 let currentQuiz = null;

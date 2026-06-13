@@ -375,7 +375,7 @@ try {
             data.password = document.getElementById('form-password').value;
         }
 
-        fetch('/admin/instructors.php', {
+        fetch(BASE_URL + '/admin/instructors.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
             body: JSON.stringify(data)
@@ -397,7 +397,7 @@ try {
 
     function deleteInstructor(id) {
         if (confirm('Are you sure you want to delete this instructor? This action cannot be undone.')) {
-            fetch('/admin/instructors.php', {
+            fetch(BASE_URL + '/admin/instructors.php', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
                 body: JSON.stringify({ id: id })

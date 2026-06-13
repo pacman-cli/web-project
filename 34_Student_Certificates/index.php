@@ -138,7 +138,7 @@ try {
                                 <span class="material-symbols-outlined" aria-hidden="true">download</span> Download PDF
                             </a>
                             <?php if (!empty($recent['certificate_hash'])): ?>
-                                <a href="/api/certificate_verify.php?hash=<?= htmlspecialchars($recent['certificate_hash']) ?>" target="_blank" class="bg-surface-container-high text-on-surface px-md py-base rounded-lg font-label-md text-label-md flex items-center gap-xs hover:bg-surface-container-highest transition-colors">
+                                <a href="<?= BASE_URL ?>/api/certificate_verify.php?hash=<?= htmlspecialchars($recent['certificate_hash']) ?>" target="_blank" class="bg-surface-container-high text-on-surface px-md py-base rounded-lg font-label-md text-label-md flex items-center gap-xs hover:bg-surface-container-highest transition-colors">
                                     <span class="material-symbols-outlined" aria-hidden="true">verified</span> Verify
                                 </a>
                             <?php endif; ?>
@@ -181,7 +181,7 @@ try {
                                         <div class="qr-code" data-hash="<?= htmlspecialchars($cert['certificate_hash']) ?>" data-host="<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost') ?>" data-scheme="<?= (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http' ?>"></div>
                                         <div class="min-w-0">
                                             <p class="text-label-sm text-on-surface-variant truncate" title="<?= htmlspecialchars(strtoupper(substr($cert['certificate_hash'], 0, 16))) ?>"><?= htmlspecialchars(strtoupper(substr($cert['certificate_hash'], 0, 16))) ?></p>
-                                            <a href="/api/certificate_verify.php?hash=<?= htmlspecialchars($cert['certificate_hash']) ?>" target="_blank" class="text-primary text-label-sm hover:underline">Verify online</a>
+                                            <a href="<?= BASE_URL ?>/api/certificate_verify.php?hash=<?= htmlspecialchars($cert['certificate_hash']) ?>" target="_blank" class="text-primary text-label-sm hover:underline">Verify online</a>
                                         </div>
                                     </div>
                                 </div>
@@ -254,7 +254,7 @@ try {
         if (!confirm('Are you sure you want to claim your certificate for this course?')) return;
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-        fetch('/student/certificates.php', {
+        fetch(BASE_URL + '/student/certificates.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

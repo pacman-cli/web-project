@@ -277,7 +277,7 @@ try {
             status: document.querySelector('input[name="status"]:checked').value
         };
 
-        fetch('/admin/courses.php', {
+        fetch(BASE_URL + '/admin/courses.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
             body: JSON.stringify(data)
@@ -299,7 +299,7 @@ try {
 
     function deleteCourse(id) {
         if (confirm('Are you sure you want to delete this course? All related enrollments and assignments will be deleted.')) {
-            fetch('/admin/courses.php', {
+            fetch(BASE_URL + '/admin/courses.php', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= csrf_token() ?>' },
                 body: JSON.stringify({ id: id })
