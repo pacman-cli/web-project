@@ -1,0 +1,491 @@
+/*
+ * config/layout.css
+ * ════════════════════════════════════════════════════════════════════════════
+ * LMS LAYOUT FOUNDATION — Single Source of Truth for all structural CSS.
+ *
+ * This file defines:
+ *   1. CSS Custom Properties (design tokens, layout dimensions)
+ *   2. The 3-zone layout: sidebar | topbar | content
+ *   3. Typography enforcement
+ *   4. Component resets (no page can override these)
+ *
+ * Load order: This file is loaded BEFORE Tailwind utilities so that
+ * Tailwind classes can override component styles (not the other way around).
+ * ════════════════════════════════════════════════════════════════════════════
+ */
+
+/* ── 1. Design Tokens (CSS Custom Properties) ────────────────────────────────
+   Single place to change any layout measurement. Tailwind spacing tokens
+   mirror these values — do NOT hardcode pixel values in page files.
+   ──────────────────────────────────────────────────────────────────────────*/
+:root {
+  /* Layout dimensions */
+  --sidebar-w:        260px;
+  --topbar-h:         64px;
+  --content-px:       32px;
+  --content-py:       32px;
+  --content-max-w:    1280px;
+
+  /* Spacing scale (8-pt grid) */
+  --sp-xs:   4px;
+  --sp-sm:   12px;
+  --sp-md:   24px;
+  --sp-lg:   40px;
+  --sp-xl:   64px;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --text-h1:        700 32px / 1.2  var(--font-sans);
+  --text-h2:        600 24px / 1.3  var(--font-sans);
+  --text-h3:        600 20px / 1.4  var(--font-sans);
+  --text-h4:        600 17px / 1.4  var(--font-sans);
+  --text-body-lg:   400 16px / 1.6  var(--font-sans);
+  --text-body-md:   400 14px / 1.5  var(--font-sans);
+  --text-body-sm:   400 13px / 1.5  var(--font-sans);
+  --text-label-md:  500 12px / 1.4  var(--font-sans);
+  --text-label-sm:  600 11px / 1.2  var(--font-sans);
+
+  /* Colour tokens (Material Design 3 base) */
+  --clr-primary:          #003d9b;
+  --clr-primary-dim:      #b2c5ff;
+  --clr-on-primary:       #ffffff;
+  --clr-surface:          #f7f9fb;
+  --clr-surface-low:      #f2f4f6;
+  --clr-surface-container:#eceef0;
+  --clr-surface-white:    #ffffff;
+  --clr-on-surface:       #191c1e;
+  --clr-on-surface-var:   #434654;
+  --clr-outline:          #737685;
+  --clr-outline-var:      #c3c6d6;
+  --clr-error:            #ba1a1a;
+  --clr-secondary:        #505f76;
+
+  /* Role accent colours */
+  --clr-admin:      #003d9b;
+  --clr-instructor: #1a6b3c;
+  --clr-student:    #6a1a8c;
+  --clr-guest:      #5b4800;
+
+  /* Radius scale */
+  --radius-sm:  6px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-full:9999px;
+
+  /* Elevation (box-shadow) */
+  --shadow-card:   0 1px 3px 0 rgba(0,0,0,.06), 0 1px 2px -1px rgba(0,0,0,.06);
+  --shadow-card-md:0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -2px rgba(0,0,0,.07);
+  --shadow-modal:  0 20px 25px -5px rgba(0,0,0,.15), 0 8px 10px -6px rgba(0,0,0,.1);
+  --shadow-topbar: 0 1px 0 0 var(--clr-outline-var);
+
+  /* Animation */
+  --ease-default: cubic-bezier(.4, 0, .2, 1);
+  --duration-fast:  120ms;
+  --duration-base:  200ms;
+  --duration-slow:  300ms;
+}
+
+/* ── 2. Global Reset & Base ───────────────────────────────────────────────────*/
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font: var(--text-body-md);
+  background-color: var(--clr-surface);
+  color: var(--clr-on-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  /* Prevent any page CSS from accidentally shifting the body */
+  overflow-x: hidden;
+}
+
+/* ── 3. THE 3-ZONE LAYOUT ────────────────────────────────────────────────────
+   ┌─────────────────────────────────────────────────────┐
+   │  .lms-sidebar (fixed, left)  │  .lms-topbar (fixed) │
+   │                              │──────────────────────│
+   │                              │  .lms-content        │
+   │                              │  (scrollable)        │
+   └─────────────────────────────────────────────────────┘
+   ──────────────────────────────────────────────────────────────────────────*/
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+.lms-sidebar {
+  /* Position: always fixed to the left edge */
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-w);
+  z-index: 50;
+
+  /* Visual */
+  background: var(--clr-surface-low);
+  border-right: 1px solid var(--clr-outline-var);
+
+  /* Internal layout */
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Smooth resize on future collapse feature */
+  transition: width var(--duration-base) var(--ease-default),
+              transform var(--duration-base) var(--ease-default);
+}
+
+/* Sidebar scrollbar */
+.lms-sidebar::-webkit-scrollbar { width: 4px; }
+.lms-sidebar::-webkit-scrollbar-thumb { background: var(--clr-outline-var); border-radius: var(--radius-full); }
+
+/* Sidebar brand block */
+.lms-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: var(--sp-md) var(--sp-sm);
+  border-bottom: 1px solid var(--clr-outline-var);
+  flex-shrink: 0;
+}
+
+.lms-sidebar__logo {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--clr-on-primary);
+  flex-shrink: 0;
+}
+
+.lms-sidebar__name {
+  font: var(--text-h4);
+  color: var(--clr-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lms-sidebar__role {
+  font: var(--text-label-sm);
+  color: var(--clr-outline);
+  letter-spacing: 0.04em;
+}
+
+/* Sidebar navigation */
+.lms-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-sm) var(--sp-xs);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.lms-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  font: var(--text-body-md);
+  font-weight: 500;
+  color: var(--clr-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  white-space: nowrap;
+  position: relative;
+  /* CRITICAL: border-left reserved space prevents layout shift */
+  border-left: 3px solid transparent;
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    color           var(--duration-fast) var(--ease-default),
+    border-color    var(--duration-fast) var(--ease-default);
+}
+
+.lms-nav__item:hover {
+  background: rgba(0, 0, 0, .045);
+  color: var(--clr-on-surface);
+}
+
+.lms-nav__item.is-active {
+  color: var(--clr-primary);
+  font-weight: 600;
+  /* border-left is set inline per role via --role-accent */
+  border-left-color: var(--role-accent, var(--clr-primary));
+  background: color-mix(in srgb, var(--role-accent, var(--clr-primary)) 10%, transparent);
+}
+
+/* Sidebar footer */
+.lms-sidebar__footer {
+  padding: var(--sp-sm) var(--sp-xs);
+  border-top: 1px solid var(--clr-outline-var);
+  flex-shrink: 0;
+}
+
+.lms-sidebar__user {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: var(--sp-sm);
+  border-radius: var(--radius-md);
+}
+
+.lms-sidebar__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: var(--text-label-sm);
+  color: var(--clr-on-primary);
+  flex-shrink: 0;
+}
+
+.lms-sidebar__username {
+  font: var(--text-label-md);
+  font-weight: 600;
+  color: var(--clr-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lms-sidebar__user-role {
+  font: var(--text-label-sm);
+  color: var(--clr-outline);
+}
+
+/* ── Topbar ───────────────────────────────────────────────────────────────── */
+.lms-topbar {
+  /* Position: fixed to the top, spanning only the content zone */
+  position: fixed;
+  top: 0;
+  /* left offset = sidebar width — set in JS or via CSS var */
+  left: var(--sidebar-w);
+  right: 0;
+  height: var(--topbar-h);
+  z-index: 40;
+
+  /* Visual */
+  background: var(--clr-surface-white);
+  border-bottom: 1px solid var(--clr-outline-var);
+  box-shadow: var(--shadow-topbar);
+
+  /* Internal layout */
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  padding: 0 var(--sp-md);
+}
+
+.lms-topbar__title {
+  font: var(--text-h4);
+  color: var(--clr-on-surface);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lms-topbar__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--clr-outline-var);
+  flex-shrink: 0;
+}
+
+.lms-topbar__search {
+  position: relative;
+  flex: 1;
+  max-width: 360px;
+}
+
+.lms-topbar__search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--clr-outline);
+  pointer-events: none;
+  font-size: 18px !important;
+}
+
+.lms-topbar__search-input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid var(--clr-outline-var);
+  border-radius: var(--radius-md);
+  font: var(--text-body-md);
+  background: var(--clr-surface-low);
+  color: var(--clr-on-surface);
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease-default),
+              box-shadow   var(--duration-fast) var(--ease-default);
+}
+
+.lms-topbar__search-input:focus {
+  border-color: var(--role-accent, var(--clr-primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--role-accent, var(--clr-primary)) 15%, transparent);
+}
+
+.lms-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* Role badge in topbar */
+.lms-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font: var(--text-label-sm);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--role-accent, var(--clr-primary)) 12%, transparent);
+  color: var(--role-accent, var(--clr-primary));
+}
+
+/* User info section in topbar */
+.lms-topbar__user {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.lms-topbar__user:hover {
+  background: var(--clr-surface-low);
+}
+
+.lms-topbar__user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: var(--text-label-sm);
+  color: var(--clr-on-primary);
+  flex-shrink: 0;
+}
+
+/* ── Content Zone ─────────────────────────────────────────────────────────── */
+.lms-content {
+  /* Push content right of sidebar, below topbar */
+  margin-left: var(--sidebar-w);
+  padding-top: var(--topbar-h);
+  min-height: 100vh;
+  /* Transitions mirror sidebar */
+  transition: margin-left var(--duration-base) var(--ease-default);
+}
+
+/* The actual page canvas inside .lms-content */
+.lms-page {
+  padding: var(--content-py) var(--content-px);
+  max-width: var(--content-max-w);
+  width: 100%;
+}
+
+/* Full-width pages (tables, dashboards) */
+.lms-page--full {
+  max-width: none;
+}
+
+/* Tight page (forms, modals as pages) */
+.lms-page--narrow {
+  max-width: 720px;
+}
+
+/* ── Page Header (title + action bar) ────────────────────────────────────── */
+.lms-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-sm);
+  margin-bottom: var(--sp-lg);
+}
+
+.lms-page-title {
+  font: var(--text-h1);
+  color: var(--clr-on-surface);
+}
+
+.lms-page-subtitle {
+  font: var(--text-body-lg);
+  color: var(--clr-outline);
+  margin-top: var(--sp-xs);
+}
+
+/* ── Section Headers ─────────────────────────────────────────────────────── */
+.lms-section-title {
+  font: var(--text-h3);
+  color: var(--clr-on-surface);
+  margin-bottom: var(--sp-md);
+}
+
+/* ── Typography Enforcement ──────────────────────────────────────────────── */
+/* Headings inside .lms-content cannot accidentally change size */
+.lms-content h1 { font: var(--text-h1); color: var(--clr-on-surface); }
+.lms-content h2 { font: var(--text-h2); color: var(--clr-on-surface); }
+.lms-content h3 { font: var(--text-h3); color: var(--clr-on-surface); }
+.lms-content h4 { font: var(--text-h4); color: var(--clr-on-surface); }
+.lms-content p  { font: var(--text-body-md); }
+
+/* ── Icon System ─────────────────────────────────────────────────────────── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  flex-shrink: 0;
+}
+.icon-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.icon-sm { font-size: 18px !important; }
+.icon-lg { font-size: 28px !important; }
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--clr-outline-var); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--clr-outline); }
+
+/* ── Transition Helpers ──────────────────────────────────────────────────── */
+.transition-fast { transition: all var(--duration-fast) var(--ease-default); }
+.transition-base { transition: all var(--duration-base) var(--ease-default); }
+
+/* ── Focus Ring ──────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--role-accent, var(--clr-primary));
+  outline-offset: 2px;
+}
+
+/* ── Utility: visually hidden (a11y) ─────────────────────────────────────── */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0;
+}

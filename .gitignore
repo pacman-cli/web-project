@@ -1,0 +1,20 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Agent skills (local, not project)
+.agents/
+
+# Local config overrides (secrets)
+config/db.local.php
+config/cert.local.php
+
+# Uploaded files
+uploads/
+
+# Vendor (if composer is ever added)
+vendor/
